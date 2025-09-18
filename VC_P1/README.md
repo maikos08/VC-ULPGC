@@ -69,6 +69,9 @@ while True:
 vid.release()
 cv2.destroyAllWindows()
 ```
+No hemos implementado el caso para los bloques 8x8, pero haríamos lo siguiente:
+En lugar de localizar el píxel más claro y más oscuro, dividiríamos cada frame (pasandolo también a una escala de gris) en bloques de 8x8 píxeles . Para cada bloque calcularíamos la media de intensidades en ese grupo de  pixeles, y guardaríamos el bloque con el valor más bajo (zona más oscura) y el más alto (zona más clara).
+Finalmente, solo nos quedaría por dibujar los círculos sobre esas zonas en cada frame.
 
 ---
 
