@@ -1,130 +1,157 @@
-## Práctica 1. Primeros pasos con OpenCV
+# Práctica 1 - Visión por Computador
 
-### Contenidos
+Este documento recoge el desarrollo de la primera práctica de la asignatura **Visión por Computador**.  
+La práctica consiste en 5 tareas orientadas al tratamiento de imágenes y vídeo en Python, utilizando librerías especializadas en visión artificial.  
+Cada tarea incluye su propósito, descripción del procedimiento y fragmentos de código relevantes.
 
-[Instalación](#11-instalando-el-entorno-de-desarrollo)  
-[Anaconda](#111-comandos-basicos-de-anaconda)  
-[Spec-list](#112-un-environment-para-varias-practicas)  
-[Mi carpeta](#113-el-environment-en-otra-carpeta)  
-[Aspectos cubiertos](#12-aspectos-cubiertos)  
+---
 
-### 1.1. Instalando el entorno de desarrollo  
+## Autores
+- *Alberto José Rodríguez Ruano*  
+- *Miguel Ángel Rodríguez Ruano* 
 
-Si bien tienen libertad para seleccionar el entorno de desarrollo, la opción escogida para mostrar
-los distintos ejemplos en el laboratorio con Python desde Windows ha sido [Anaconda](https://www.anaconda.com). Anaconda permite crear distintos *environments*, cada uno con sus paquetes particulares y versiones específicas instaladas, pudiendo desde [Visual Studio Code](https://code.visualstudio.com) ejecutar un cuaderno concreto escogiendo el *environment* que interese. Para las personas que prefieran no utilizar Windows, comentarles que nuestra experiencia en Linux con [Miniconda](https://docs.conda.io/projects/miniconda/en/latest/miniconda-install.html) ha sido similar.
+---
 
-Los equipos del laboratorio ya cuentan con Anaconda y VS Code instalados, si bien no completamente configurados para ejecutar el cuaderno de esta práctica. Conocida esta circunstancia, para poder ejecutar un primer cuaderno proporcionado tras contar en el equipo con la instalación de Anaconda y VS Code, los pasos a realizar son:
+## Tarea 1 - Generar un tablero de ajedrez
+Se crea un tablero de ajedrez en escala de grises de 8x8 casillas, rellenando las posiciones blancas mediante bucles anidados.
 
-- Lanzar *Anaconda Prompt*
+```python
+gris_img = np.zeros((800,800,1), dtype=np.uint8)
+height, width = 100, 100
 
-- Crear el *environment* con la configuración que nos interese. Para crear uno que ejecute el cuaderno de esta primera práctica, sin darle muchas vueltas con una versión reciente de Python, se les propone lo siguiente:
+for i in range(8):
+    for j in range(8):
+        if (i % 2 == 0 and j % 2 == 0) or (i % 2 != 0 and j % 2 != 0):
+            x_start, x_end = i * width, (i + 1) * width
+            y_start, y_end = j * height, (j + 1) * height
+            gris_img[x_start:x_end, y_start:y_end, 0] = 255
 
-```
-conda create --name VC_P1 python=3.11.5
-```
-
-Observen que crea el *environment* *VC_P1* con una versión de Python en particular. Sustituye *VC_P1* por el nombre que decidas. Tras crearlo, y activarlo, instala un par de paquetes adicionales (recuerda sustituir *VC_P1* por el nombre que hayas decidido):
-
-```
-conda activate VC_P1
-pip install opencv-python
-pip install matplotlib
-```
-
-NOTA: Para aquellas personas que quieren trabajar bajo Windows, tienen disponible en la sección 1.1.2, la descripción de creación de un *environment* con más paquetes que tendrá vida útil para varias prácticas, si bien con una versión previa de Python. No es estrictamente necesario, y puede dar algún quebradero de cabeza.
-
-Una vez que ya está el *environment* creado:
-
-- Descargar los archivos disponibles en github de la práctica 1 (carpeta *P1*)
-
-- Lanzar VS Code (en el PC del laboratorio disponible en el escritorio)
-
-- Instalar la extensión de Python en VS Code. Desde el [enlace](https://code.visualstudio.com/docs/languages/python) con VS Code abierto debería llevar al [enlace](https://marketplace.visualstudio.com/items?itemName=ms-python.python) en el *Marketplace*
-
-- Abrir el cuaderno de la práctica en VS Code (si el doble clic no va, puedes abrir el archivo desde VC Code)
-
-- Con el cuaderno abierto, en la parte superior derecha aparece *Select Kernel*. Tras picar deberías poder escoger el *environment*
-
-- Si no funcionara lo anterior, se hace necesario lanzar su *Command Palette* con la combinación *CTRL+SHIT+Palette*. Desde ella selecciona el *environment* recientemente creado, tecleando *Python: Seleccionar intérprete*, escogiendo el que nos interesa, el *environment* *VC_P1*. En caso de no aparecer, a pesar de  haber sido creado, en algunos equipos ha sido necesario cerrar y volver a lanzar VS Code.
-
-- En algunas máquinas al intentar el comando anterior, ha aparecido un error con algo como *interpreter not found*. Se ha resuelto seleccionando en la parte inferior izquierda el modo *Trust* en lugar de *Restricted*.
-
-- Una vez llegados a este punto, la primera ejecución de un cuaderno probablemente produzca un error, ya que es necesario instalar *ipykernel* con elementos para el uso de los cuadernos. Si no funciona de forma automática, VS Code dará error y sugerirá lanzar desde línea de comando (en ocasiones hemos tenido que lanzarlo desde el environment *base*):
-
-```
-conda install -n ENV_NAME ipykernel --update-deps --force-reinstall
+plt.imshow(gris_img, cmap='gray')
+plt.show()
 ```
 
-- Llegados a este punto, ya debería ser posible ejecutar el cuaderno de esta primera práctica. Cruzo los dedos, y veremos las variantes con las que se encuentran ustedes.
+---
 
-#### 1.1.1. Comandos básicos de Anaconda
+## Tarea 2 - Crear una imagen estilo Mondrian
+Se genera una composición inspirada en Mondrian utilizando rectángulos de colores primarios y blanco.
 
-En el proceso de creación del *environment* pueden surgir errores, quizás necesitemos eliminarlo, crearlo de  nuevo, listar los existentes. Un muy breve resumen de comandos frecuentes:
+```python
+color_img = np.zeros((325,400,3), dtype=np.uint8)
 
-```
-conda info --envs # Lista environments existentes
-conda remove --name ENV_NAME --all # Elimina el environment ENV_NAME
-conda list --explicit > spec-file.txt   # genera un txt con los elementos presentes en el environment activado
-```
+cv2.rectangle(color_img,(0,0),(15,100),(255,255,255),-1)
+cv2.rectangle(color_img,(25,0),(80,100),(255,255,0),-1)
+cv2.rectangle(color_img,(90,0),(200,100),(0,0,255),-1)
+cv2.rectangle(color_img,(210,0),(330,100),(255,0,0),-1)
 
-#### 1.1.2. Un environment para varias prácticas
+# Para ver todos los rectángulos del ejercicio entrar en el entregable (archivo VC_P1.ipynb)
+...
 
-En ocasiones puede ser necesario clonar un *environment* en otro equipo. Una posibilidad es exportando la lista de requisitos, y proceder a su instalación en el otro equipo. Reproduzco la instalación que está en funcionamiento en mi equipo portátil en su partición bajo Windows (no funcionará con otros sistemas operativos). Hace uso de la versión Python 3.7.3, e incluye
-paquetes no necesarios en las primeras prácticas. En el caso de querer adoptarla, sugiero sustituir *ENV_NAME* por un nombre de tu elección. En el caso de trabajar en otro sistema operativo, evitar incluir *spec-list.txt* e ir añadiendo los paquetes que vayan siendo necesarios.
-
-```
-conda create --name ENV_NAME python=3.7.3 --file spec-list.txt
-```
-
-El comando anterior puede requerir unos minutos. A continuación se activa el *environment*
-
-```
-conda activate ENV_NAME
+plt.imshow(color_img)
+plt.show()
 ```
 
-Y se instala algún paquete adicional necesario
+---
 
+## Tarea 3 - Modificar valores de un plano de la imagen
+Se captura vídeo en tiempo real desde la cámara y se sustituye el canal azul por el canal rojo.
+
+```python
+vid = cv2.VideoCapture(0)
+
+while True:
+    ret, frame = vid.read()
+    if ret:
+        frame[:,:,0] = frame[:,:,2]  # Canal azul sustituido por rojo
+        cv2.imshow('WebCam', frame)
+    if cv2.waitKey(20) == 27:
+        break
+
+vid.release()
+cv2.destroyAllWindows()
 ```
-pip install imutils scikit-learn matplotlib
+No hemos implementado el caso para los bloques 8x8, pero haríamos lo siguiente:
+En lugar de localizar el píxel más claro y más oscuro, dividiríamos cada frame (pasandolo también a una escala de gris) en bloques de 8x8 píxeles . Para cada bloque calcularíamos la media de intensidades en ese grupo de  pixeles, y guardaríamos el bloque con el valor más bajo (zona más oscura) y el más alto (zona más clara).
+Finalmente, solo nos quedaría por dibujar los círculos sobre esas zonas en cada frame.
+
+---
+
+## Tarea 4 - Detectar píxeles más claros y oscuros
+Se convierte el vídeo en escala de grises y se localizan los píxeles con menor y mayor intensidad.  
+Se marcan con círculos de colores en la imagen original.
+
+```python
+vid = cv2.VideoCapture(0)
+
+while True:
+    ret, frameIN = vid.read()
+    if not ret:
+        break
+
+    gray = cv2.cvtColor(frameIN, cv2.COLOR_BGR2GRAY)
+    minVal, maxVal, minLoc, maxLoc = cv2.minMaxLoc(gray)
+
+    cv2.circle(frameIN, minLoc, 5, (255,0,0), 2)  # Azul en el píxel más oscuro
+    cv2.circle(frameIN, maxLoc, 5, (0,0,255), 2)  # Rojo en el píxel más claro
+
+    cv2.imshow('Cam', frameIN)
+    if cv2.waitKey(20) == 27:
+        break
+
+vid.release()
+cv2.destroyAllWindows()
 ```
 
+---
 
-#### 1.1.3. El environment en otra carpeta
+## Tarea 5 - Propuesta propia de Pop Art
+Se implementa un efecto **Pop Art** en tiempo real dividiendo la pantalla en un collage de 18 cuadros (3 filas x 6 columnas).  
+En la parte izquierda se aplican transformaciones de color sobre los canales RGB y en la parte derecha diferentes variaciones en escala de grises.
 
+```python
+vid = cv2.VideoCapture(0)
+w = int(vid.get(cv2.CAP_PROP_FRAME_WIDTH) / 6)
+h = int(vid.get(cv2.CAP_PROP_FRAME_HEIGHT) / 3)
 
-Tener presente que en el laboratorio, si trabajas con el ordenador del aula, el rearranque borra directorios locales, por lo que los *environments* creados localmente, desaparecen. Puede interesar por ello crearlo en una carpeta local que no se limpie, como */pub/tmp*, en un disco externo o *pen* propio con *--prefix flag*.
-Para crear el *environment* de la subsección previa en una carpeta concreta en el PC, he procedido con los siguientes comandos:
+collage = np.zeros((h*3, w*6, 3), dtype=np.uint8)
 
+while True:
+    ret, frame = vid.read()
+    if not ret: break
+    frame = cv2.resize(frame, (w, h))
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
+
+    # Ejemplo de transformaciones
+    # Para ver todas las propuestas en el ejercicio entrar en el entregable (archivo VC_P1.ipynb)
+    collage[0:h, 0:w] = [frame[:,:,0], frame[:,:,1], 255 - frame[:,:,2]]
+    collage[0:h, 3*w:4*w] = gray
+    collage[h:2*h, 4*w:5*w] = cv2.convertScaleAbs(gray, alpha=0.5, beta=100)
+
+    cv2.imshow('Cam', collage)
+    if cv2.waitKey(20) == 27: break
+
+vid.release()
+cv2.destroyAllWindows()
 ```
-conda create --prefix c:/pub/tmp/JPA/FACES --file spec-list.txt python=3.7.3
-conda activate c:/pub/tmp/JPA/FACES
-pip install imutils scikit-learn matplotlib
+
+---
+
+## Instalación y requisitos
+Para ejecutar esta práctica es necesario tener instalado **Python y Jupyter** junto con las siguientes librerías:
+
+```bash
+pip install opencv-python numpy matplotlib
 ```
 
+Se requiere disponer de una cámara web para las tareas que implican captura de vídeo.
 
-Si algo hubiera ido mal y quisieras eliminar el *environment* para empezar de nuevo, recordar los comandos del apartado 1.1.1
+---
 
+## Fuentes
+- [Documentación de OpenCV](https://docs.opencv.org/)  
+- [Documentación de NumPy](https://numpy.org/doc/)  
+- [Documentación de Matplotlib](https://matplotlib.org/stable/contents.html)  
+- Ejemplos dispuestos en la base de esta práctica 1 de VC proporcionados por el profesorado 
+- Copilot
+- ChatGPT  
 
-### 1.2. Aspectos cubiertos y entrega
-
-El objetivo de esta práctica en primer término es poder ejecutar el cuaderno proporcionado en nuestro propio equipo o el del laboratorio. Este primer cuaderno (*VC_P1.ipynb*) debe servir para comprender de forma aplicada la representación de imágenes de grises y color, su modificación, visualización y tratamiento básico. Al finalizar la práctica, debes ser capaz de crear una imagen de un determinado tamaño,
-acceder a los valores asociados a un determinado píxel, modificar dichos valores, dibujar primitivas gráficas básicas sobre una imagen, abrir una imagen de disco, así como acceder a los fotogramas de un vídeo o captura de cámara. Para todo ello, se proponen varias tareas (espero no dejarme ninguna atrás aquí):
-
-- Crear una imagen con la textura de un tablero de ajedrez
-- Crear una imagen estilo Mondrian como por ejemplo la mostrada a continuación:
-
-![Mondrian](https://images.squarespace-cdn.com/content/v1/5f638d3adfa9c677cced1579/1602089211975-ONZ6AALHOOPRVT7Z5ALL/Composición+en+rojo%2C+amarillo+y+azul.jpg?format=2500w)  
-*Piet Mondrian, "Composición con rojo, amarillo y azul" (1930).*
-
-- Hacer uso de las funciones de dibujo de OpenCV
-- Modificar un plano de la imagen
-- Destacar tanto el píxel con el color más claro como con el color más oscuro de una imagen
-- Hacer una propuesta pop art con la entrada de la cámara web o vídeo
-
-La **entrega del cuaderno o cuadernos** con la resolución de tareas propuestas e imágenes resultantes se realizará por grupos a través del campus virtual por medio de un **enlace github**, teniendo como límite el comienzo de la siguiente sesión práctica de cada grupo. Dichos cuadernos no deben contener celdas que no sean de interés para la resolución de las tareas. Durante la siguiente sesión práctica cada grupo, en orden aleatorio, presentará y defenderá el resultado al profesor responsable de la práctica. De forma genérica, para todas las prácticas, el repositorio github debe incluir un **archivo README** describiendo el trabajo realizado, identificando la **autoría**, además de incluir **referencia a todas las fuentes que hayan sido utilizadas** de alguna forma en el desarrollo de la práctica, e indicar si la ejecución del cuaderno requiere alguna instalación adicional. Será adecuado que el o los cuadernos estén también comentados indicando el propósito de las distintas celdas presentadas como resolución de la tarea o tareas solicitadas.
-
-
-
-
-***
-Bajo licencia de Creative Commons Reconocimiento - No Comercial 4.0 Internacional
