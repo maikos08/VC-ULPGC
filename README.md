@@ -22,7 +22,8 @@ El objetivo de estas prácticas es aplicar los conocimientos adquiridos en clase
 
 ## 📁 Estructura del repositorio
 
-* `VC_P1/` → Práctica 1 completa ✅
+* [VC_P1/](https://github.com/maikos08/VC-ULPGC/tree/main/VC_P1) → Práctica 1 completa ✅
+* [VC_P2/](https://github.com/maikos08/VC-ULPGC/tree/main/VC_P2) → Práctica 2 completa ✅
 * *(Se irán añadiendo nuevas carpetas para el resto de prácticas)*
 
 ---
