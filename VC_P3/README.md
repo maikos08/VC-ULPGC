@@ -165,7 +165,7 @@ A continuación se presentan los resultados obtenidos tras aplicar el sistema de
 La primera imagen se tomó en un entorno controlado, con fondo blanco y buena iluminación.
 El sistema detecta correctamente todas las monedas y clasifica de forma precisa tanto su valor como su color.
 
-![Resultados con fondo blanco](Resultado monedas.png)
+![Resultados con fondo blanco](Resultado%20monedas.png)
 
 ---
 
@@ -174,7 +174,7 @@ El sistema detecta correctamente todas las monedas y clasifica de forma precisa 
 En esta captura, realizada con la cámara del móvil, aparecen **sombras y reflejos** que dificultan la segmentación y el análisis de color.
 El sistema muestra varios errores de clasificación, confundiendo algunas monedas de diferente color y valor.
 
-![Resultados con sombras y reflejos - fallos](Resultado monedas 2.png)
+![Resultados con sombras y reflejos - fallos](Resultado%20monedas%202.png)
 
 ---
 
@@ -183,5 +183,5 @@ El sistema muestra varios errores de clasificación, confundiendo algunas moneda
 En esta imagen también existen sombras y reflejos.
 El sistema logra **clasificar correctamente la mayoría de las monedas**, fallando únicamente en una, lo que demuestra una buena **robustez ante variaciones lumínicas**.
 
-![Resultados con sombras moderadas - aciertos](Resultado monedas 3.png)
+![Resultados con sombras moderadas - aciertos](Resultado%20monedas%203.png)
 
