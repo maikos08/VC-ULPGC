@@ -1,52 +1,187 @@
-## Práctica 3. Detección y reconocimiento de formas
+# Práctica 3 - Visión por Computador
 
-### Contenidos
+Este documento recoge el desarrollo de la tercera práctica de la asignatura **Visión por Computador**.  
+La práctica se centra en la **detección y reconocimiento de formas**, con dos tareas principales: identificación de monedas y clasificación de microplásticos utilizando técnicas de procesamiento de imágenes.
 
-[Aspectos cubiertos](#31-aspectos-cubiertos)  
-[Entrega](#32-entrega)
+---
 
-### 3.1. Aspectos cubiertos
+## Autores
+- *Alberto José Rodríguez Ruano*  
+- *Miguel Ángel Rodríguez Ruano* 
 
-En esta práctica el objetivo es adquirir nociones para extraer información geométrica de objetos presentes en una imagen, con el fin de caracterizarlos y posteriormente ser capaz de identificarlos de forma automática en categorías. El cuaderno de la práctica, *VC_P3.ipynb*, contiene diversos ejemplos mostrando variantes para la detección de objetos presentes en la imagen, como paso previo a su caracterización geométrica. En este sentido, se plantea el uso del umbralizado y la detección de contornos. Para el caso concreto de monedas, se considera también la utilización de la transformada de Hough para la localización de formas circulares.
+---
 
-Si bien no es necesario instalar paquetes adicionales para las primeras celdas del cuaderno, de cara a poder obtener la matriz de confusión, es requisito instalar en el *environment* los paquetes *scikit-learn* y *seaborn* para disponer de utilidades para el cálculo de [métricas](https://developers.google.com/machine-learning/crash-course/classification/accuracy-precision-recall?hl=es-419). Con *pip* sería algo como:
+## Tarea 1 - Identificación y Conteo de Monedas con Diferenciación por Color
 
+### Objetivo
+Desarrollar un sistema que permita determinar la cantidad de dinero presente en una imagen mediante:
+1. **Detección automática** de todas las monedas presentes
+2. **Selección interactiva** de una moneda de referencia (1€) mediante clic
+3. **Clasificación por valor** utilizando análisis de tamaño y color
+4. **Cálculo del valor total** en euros y céntimos
+5. **Visualización diferenciada** por color según el valor de las monedas
+
+### Metodología Implementada
+
+#### 1. Detección de Círculos con Transformada de Hough
+Se utiliza la transformada de Hough para detectar círculos (monedas) en la imagen:
+
+```python
+# Preprocesamiento de la imagen
+img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+img_blurred = cv2.medianBlur(img_gray, 5)  # Reduce ruido
+
+# Detección de círculos usando Hough
+circles = cv2.HoughCircles(
+    img_blurred, cv2.HOUGH_GRADIENT, 1, 100, 
+    param1=100, param2=50, minRadius=10, maxRadius=150
+)
+circles = np.uint16(np.around(circles)) if circles is not None else None
 ```
-pip install scikit-learn seaborn
+
+#### 2. Interfaz de Selección por Clic
+Sistema interactivo para selección de moneda de referencia mediante clic del ratón:
+
+```python
+# Función callback para detectar clic en moneda
+def select_reference_coin(event, x, y, flags, params):
+    global reference_coin
+    if event == cv2.EVENT_LBUTTONDOWN and circles is not None:
+        for idx, (cx, cy, r) in enumerate(circles[0, :]):
+            if np.hypot(x - cx, y - cy) <= r:
+                reference_coin = (cx, cy, r)
+                # Marcar moneda seleccionada
+                cv2.circle(display_img, (int(cx), int(cy)), int(r), (0, 0, 255), 3)
+                cv2.putText(display_img, "1 Euro", (int(cx - 40), int(cy - r - 10)),
+                            cv2.FONT_HERSHEY_TRIPLEX, 0.8, (0, 0, 255), 2)
+                return
+
+# Configurar ventana interactiva
+cv2.namedWindow("clica en la moneda de 1€", cv2.WINDOW_NORMAL)
+cv2.setMouseCallback("clica en la moneda de 1€", select_reference_coin)
 ```
 
+#### 3. Establecimiento de Escala
+Cálculo de correspondencia píxeles-milímetros usando moneda de 1€:
 
-### 3.2. Entrega
+```python
+# Radios conocidos de las monedas en milímetros (radios, no diámetros)
+COIN_RADII_MM = {
+    1: 16.25,    # 1 céntimo
+    2: 18.75,    # 2 céntimos  
+    5: 21.25,    # 5 céntimos
+    10: 19.75,   # 10 céntimos
+    20: 22.25,   # 20 céntimos
+    50: 24.25,   # 50 céntimos
+    100: 23.25,  # 1 euro
+    200: 25.75   # 2 euros
+}
 
-Para la entrega de esta práctica, son dos las tareas planteadas. En la primera tarea, el reto o tarea consiste en determinar la cantidad de dinero y monedas presentes en la imagen. Una extensión válida sería la presencia de objetos que no sean monedas en la imagen anañizada. 
+# Cálculo de tamaño real basado en referencia
+radius_mm = r / reference_coin[2] * COIN_RADII_MM[100]
+```
 
-Para la segunda tarea, se proporcionan imágenes de tres clases de objetos recogidos en playas canarias: fragmentos plásticos, *pellets* y alquitrán. Para cada categoría se proporciona una imagen completa y una subimagen de la misma. Las dos primeras categorías se consideran microplásticos cuando miden menos de 5mm, mientras que la tercera es muy habitual encontrarlas en playas canarias. Observar que dado que cada imagen contiene muestras de una única categoría, disponen de un conjunto de datos anotado. La tarea propuesta consiste en primer término, hacer uso de las imágenes proporcionadas, extraer de forma automatizada las partículas e identificar patrones en sus características geométricas y de apariencia que puedan permitir la clasificación de las partículas en dichas imágenes. Las características que determinen se usarán para analizar la imagen de test proporcionada, con presencia de muestras de las tres clases. El resultado obtenido debe mostrarse por medio las métricas mostradas en el cuaderno, incluyendo la matriz de confusión, donde se comparan las anotaciones con las predicciones.
+#### 4. Clasificación Multimodal (Tamaño + Color)
+Análisis combinado para identificación precisa usando valores HSV:
 
-![Confusión](MatrizConfu.png)  
-*Ejemplo de matriz de confusión*
+```python
+# Función de análisis de color en espacio HSV
+def analyze_coin_color(x, y, patch_size=5):
+    # Extrae parche de la imagen HSV y calcula promedio
+    patch = img_hsv[y1:y2, x1:x2]
+    mean_hsv = np.mean(patch, axis=(0, 1))
+    h, s, v = mean_hsv  # OpenCV HSV: H 0-180, S/V 0-255
+    
+    # Normalización: h a 0-360°, s y v a 0-1
+    h = h * 2
+    s = s / 255.0
+    v = v / 255.0
+    
+    # Clasificación por rangos HSV
+    if s < 0.25:
+        return "SILVER"  # Monedas plateadas (1€, 2€)
+    elif 0 < h < 70 and s > 0.2 and v > 0.2:
+        if h < 35:
+            return "COPPER"  # Monedas cobrizas (1c, 2c, 5c)
+        else:
+            return "GOLD"    # Monedas doradas (10c, 20c, 50c)
+    else:
+        return "UNKNOWN"
 
-A la hora de considerar posibles características geométricas, como punto de partida para la extracción de descriptores de las partículas, se proporciona enlace al trabajo [SMACC: A System for Microplastics Automatic Counting and Classification](https://doi.org/10.1109/ACCESS.2020.2970498) en el que se adoptan algunas propiedades geométricas para dicho fin. De forma resumida, las características geométricas utilizadas en dicho trabajo fueron:
+# Grupos de monedas por color
+COPPER_COINS = [1, 2, 5]      # Monedas cobrizas
+GOLD_COINS = [10, 20, 50]     # Monedas doradas  
+SILVER_COINS = [100, 200]     # Monedas plateadas/bimetálicas
+```
 
-- Área en píxeles (A)
-- Perímetro en píxeles (P)
-- Compacidad (relación del cuadrado del perímetro con el área C=P^2/A)
-- Relación del área de la partícula con el área del contenedor que la contiene
-- Relación del ancho y el alto del contenedor
-- Relación entre los ejes de la elipse ajustada
-- Definido el centroide, relación entre las distancias menor y mayor al contorno
+#### 5. Visualización con Códigos de Color
+Sistema de diferenciación visual según valor de las monedas:
 
-En relación a la segmentación de las partículas, una probable primera observación es que la aplicación del umbralizado para separarlas del fondo, es delicada. Preprocesamiento como suavizar la imagen de entrada o reducir su tamaño, o aplicar heurísticas basadas en el tamaño mínimo y máximo de los contornos localizados, y la distancia mínima entre ellos, pueden ayudar a filtrar falsas detecciones, pero a pesar de ello, será un desafío obtener una separación perfecta para todas las imágenes con la misma estrategia. Añadir, que la imagen de fragmentos contiene unas 80 partículas, la de *pellets* unas 55 y la de alquitrán unas 54.
+```python
+# Asignación de colores según valor de las monedas
+for idx, value, color in final_classifications:
+    cx, cy, r = circles[0, idx - 1]
+    
+    # Colores de bordes según grupo de valor
+    if value in [1, 2, 5]:        # Monedas de bajo valor
+        border_color = (0, 255, 255)  # Amarillo
+    elif value in [10, 20, 50]:   # Monedas de valor medio
+        border_color = (255, 0, 0)    # Azul  
+    elif value in [100, 200]:     # Monedas de alto valor
+        border_color = (0, 0, 255)    # Rojo
 
+    # Dibujar círculo y etiquetas
+    cv2.circle(img_final, (int(cx), int(cy)), int(r), border_color, 3)
+    label = f"{value//100}eu" if value >= 100 else f"{value}ct"
+    text = f"{label}  |  {color[:3]}  |  {radius_mm:.1f}mm"
+```
 
-![Contornos](Output.jpg)  
-*Ejemplo ilustrativo contornos detectados en la imagen de fragmentos*
+### Características Técnicas
 
-Si quieren ir más allá, sugerir explorar técnicas de segmentación recientes y potentes como [Segment anything o SAM](https://segment-anything.com) o [OneFormer](https://github.com/SHI-Labs/OneFormer), y extensiones como , [SAM 2](https://github.com/facebookresearch/segment-anything-2), [FastSAM](https://github.com/CASIA-IVA-Lab/FastSAM) o [Count anything](https://github.com/ylqi/Count-Anything). No duden en compartir otras alternativas que descubran.
+**Parámetros de Detección:**
+- Método: Transformada de Hough para círculos
+- Parámetros HoughCircles: dp=1, minDist=100, param1=100, param2=50
+- Rango de radios: 10-150 píxeles
+- Resolución de acumulador: 1 píxel
 
-La entrega se realizará a través del campus virtual, remitiendo un enlace a **github**, donde se alojará el **cuaderno o cuadernos** de resolución de las tareas, además de un **README** describiendo el proceso adoptado para resolver cada tarea, integrando de imágenes ilustrativas, además de las métricas obtenidas y matriz de confusión de la segunda tarea.
+**Análisis de Color:**
+- Espacio HSV para robustez ante iluminación
+- Tamaño de parche inicial: 5x5 píxeles
+- Tamaño de parche ampliado: 10x10 píxeles
+- Puntos de muestreo: centro + 4 puntos radiales a 90% del radio
 
-<!---Momentos en trabajo de Nayar sobre Binary images https://cave.cs.columbia.edu/Statics/monographs/Binary%20Images%20FPCV-1-3.pdf -->
+**Interfaz de Usuario:**
+- Selección por clic del ratón en la moneda de 1€
+- Ventana OpenCV redimensionable
+- Feedback visual inmediato con círculo rojo
+- Destrucción automática de ventanas
 
+### Resultados Obtenidos
 
-***
-Bajo licencia de Creative Commons Reconocimiento - No Comercial 4.0 Internacional
+A continuación se presentan los resultados obtenidos tras aplicar el sistema de detección y clasificación de monedas sobre tres imágenes diferentes, con condiciones de iluminación y calidad variables.
+
+#### Caso 1: Imagen en condiciones controladas
+
+La primera imagen se tomó en un entorno controlado, con fondo blanco y buena iluminación.
+El sistema detecta correctamente todas las monedas y clasifica de forma precisa tanto su valor como su color.
+
+![Resultados con fondo blanco](Resultado monedas.png)
+
+---
+
+#### Caso 2: Imagen tomada con el móvil (sombras y reflejos pronunciados)
+
+En esta captura, realizada con la cámara del móvil, aparecen **sombras y reflejos** que dificultan la segmentación y el análisis de color.
+El sistema muestra varios errores de clasificación, confundiendo algunas monedas de diferente color y valor.
+
+![Resultados con sombras y reflejos - fallos](Resultado monedas 2.png)
+
+---
+
+#### Caso 3: Imagen móvil con sombras moderadas
+
+En esta imagen también existen sombras y reflejos.
+El sistema logra **clasificar correctamente la mayoría de las monedas**, fallando únicamente en una, lo que demuestra una buena **robustez ante variaciones lumínicas**.
+
+![Resultados con sombras moderadas - aciertos](Resultado monedas 3.png)
+
