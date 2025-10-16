@@ -330,3 +330,52 @@ La clasificación de nuevos objetos se realiza mediante una distancia euclídea 
 ### Conclusiones
 El sistema logró una **tasa de acierto superior al 82%**, mostrando especial precisión en la clasificación de **fragmentos (FRA)**, mientras que las partículas tipo **TAR** y **pellets (PEL)** presentan mayor confusión. 
 El pipeline demuestra la eficacia de combinar **características geométricas simples** con una **clasificación ponderada** para la identificación automática de microplásticos.
+
+## Instalación y requisitos
+
+Para ejecutar esta práctica es necesario tener instalado **Python 3.8 o superior** y **Jupyter Notebook**.
+Además, deben instalarse las siguientes librerías:
+
+```bash
+pip install opencv-python numpy matplotlib pandas seaborn scikit-learn
+```
+
+> 💡 Se recomienda el uso de un entorno virtual (`venv` o `conda`) para evitar conflictos de dependencias.
+
+**Requisitos adicionales por tarea:**
+
+* **Tarea 1 (Monedas):**
+  Paquetes principales:
+
+  ```python
+  import cv2
+  import numpy as np
+  import matplotlib.pyplot as plt
+  import csv
+  from collections import Counter
+  ```
+
+* **Tarea 2 (Microplásticos):** 
+  Paquetes adicionales:
+
+  ```python
+  import pandas as pd
+  import seaborn as sns
+  from sklearn.preprocessing import StandardScaler
+  from sklearn.ensemble import RandomForestClassifier
+  from sklearn.metrics import confusion_matrix, classification_report, accuracy_score, precision_score, recall_score, f1_score
+  ```
+
+---
+
+## Fuentes
+
+* [Documentación de OpenCV](https://docs.opencv.org/)
+* [Documentación de NumPy](https://numpy.org/doc/)
+* [Documentación de Matplotlib](https://matplotlib.org/stable/contents.html)
+* [Documentación de scikit-learn](https://scikit-learn.org/stable/)
+* **SMACC: A System for Microplastics Automatic Counting and Classification** — referencia metodológica para la segunda tarea
+* Ejemplos base proporcionados por el profesorado en la Práctica 3 de VC
+* *GitHub Copilot*
+* *ChatGPT (OpenAI GPT-5)*
+
