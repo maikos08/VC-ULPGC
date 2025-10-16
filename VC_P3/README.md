@@ -185,3 +185,100 @@ El sistema logra **clasificar correctamente la mayoría de las monedas**, fallan
 
 ![Resultados con sombras moderadas - aciertos](Resultado%20monedas%203.png)
 
+## Tarea 2 - Clasificación de Microplásticos mediante Características Geométricas
+
+### Objetivo
+
+El propósito de esta segunda tarea es desarrollar un sistema de **clasificación automática de microplásticos** a partir de las 3 imágenes proporcionadas, utilizando **características geométricas y visuales** extraídas de las partículas observadas.  
+El sistema debe ser capaz de aprender patrones de tres tipos de partículas —**fragmentos (FRA)**, **pellets (PEL)** y **alquitrán (TAR)**— y posteriormente **clasificar objetos desconocidos** en una imagen de test (*MPs_test.jpg*), evaluando su desempeño mediante métricas estándar y una **matriz de confusión**.
+
+---
+
+### Metodología Implementada
+
+#### 1. Extracción de Máscaras Binarias
+
+Para segmentar las partículas se emplea un proceso robusto basado en:
+- **Ecualización adaptativa del canal de luminancia (CLAHE)** para compensar iluminación no uniforme.  
+- **Umbralización adaptativa** (método de Gauss) para aislar regiones relevantes.  
+- **Operaciones morfológicas** (cerrado y apertura elíptica) para limpiar ruido.  
+- **Relleno de agujeros** mediante *flood fill*.
+
+```python
+def build_binary_mask(img_bgr, morph_kernel_size=5):
+    lab = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2LAB)
+    l, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.5, tileGridSize=(8,8))
+    l_eq = clahe.apply(l)
+    img_eq = cv2.cvtColor(cv2.merge([l_eq, a, b]), cv2.COLOR_LAB2BGR)
+    blur = cv2.bilateralFilter(cv2.cvtColor(img_eq, cv2.COLOR_BGR2GRAY), 9, 75, 75)
+    mask = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                 cv2.THRESH_BINARY_INV, 35, 5)
+    # Refinado morfológico
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (morph_kernel_size, morph_kernel_size))
+    mask_clean = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    mask_clean = cv2.morphologyEx(mask_clean, cv2.MORPH_OPEN, kernel)
+    flood = mask_clean.copy()
+    h,w = flood.shape[:2]
+    mask_ff = np.zeros((h+2,w+2), np.uint8)
+    cv2.floodFill(flood, mask_ff, (0,0), 255)
+    mask_final = mask_clean | cv2.bitwise_not(flood)
+    return img_eq, mask_final
+```
+
+#### 2. Detección y Filtrado de Contornos
+Filtrado por área e intersección (IoU) para eliminar solapamientos y ruido.
+
+#### 3. Extracción de Características
+Ocho descriptores geométricos y visuales basados en el trabajo *SMACC (2020)*: área, perímetro, compacidad, relación área/rectángulo, aspecto, ejes, distancias al centroide y intensidad media de color respecto al negro (para textura/coloración).
+
+#### 4. Entrenamiento y Clasificación
+Se construye un conjunto de entrenamiento a partir de tres imágenes, una por clase:
+
+- *FRA*: fragmentos irregulares
+
+- *PEL*: pellets esféricos
+
+- *TAR*: partículas oscuras o alquitranadas
+
+Para cada clase, se calculan las características de sus partículas y se normalizan (μ, σ).
+La clasificación de nuevos objetos se realiza mediante una distancia euclídea ponderada, donde cada característica contribuye con un peso distinto en función de su relevancia empírica:
+
+| Feature | Peso |
+|----------|------|
+| Área | 3.5 |
+| Perímetro | 2.4 |
+| Compacidad | 4.5 |
+| Relación área/rectángulo | 2.25 |
+| Relación de aspecto | 3.5 |
+| Relación entre ejes | 4.0 |
+| Relación distancias al centroide | 5.3 |
+| Distancia al negro | 3.5 |
+
+---
+
+### Resultados Obtenidos
+
+#### Entrenamiento - Detección de Objetos y Extracción de Características
+![Detección FRA](entrenamiento-fra.png)  
+![Detección PELLET](entrenamiento-pellet.png)  
+![Detección TAR](entrenamiento-tar.png)
+
+#### Clasificación sobre Imagen de Test
+![Clasificación test](objetos-detectados-test.png)
+
+#### Métricas y Matriz de Confusión
+
+**Resultados globales:**  
+- Accuracy = 0.8226
+- Precision = 0.8685
+- Recall = 0.8100
+- F1=0.8290
+
+![Matriz de confusión](matriz-confusión.png)
+
+---
+
+### Conclusiones
+El sistema logró una **tasa de acierto superior al 82%**, mostrando especial precisión en la clasificación de **fragmentos (FRA)**, mientras que las partículas tipo **TAR** y **pellets (PEL)** presentan mayor confusión. 
+El pipeline demuestra la eficacia de combinar **características geométricas simples** con una **clasificación ponderada** para la identificación automática de microplásticos.
