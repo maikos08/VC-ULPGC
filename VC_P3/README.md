@@ -65,8 +65,8 @@ cv2.setMouseCallback("clica en la moneda de 1€", select_reference_coin)
 Cálculo de correspondencia píxeles-milímetros usando moneda de 1€:
 
 ```python
-# Radios conocidos de las monedas en milímetros (radios, no diámetros)
-COIN_RADII_MM = {
+# Diametros conocidos de las monedas en milímetros
+COIN_DIAMETERS_MM = {
     1: 16.25,    # 1 céntimo
     2: 18.75,    # 2 céntimos  
     5: 21.25,    # 5 céntimos
@@ -78,7 +78,7 @@ COIN_RADII_MM = {
 }
 
 # Cálculo de tamaño real basado en referencia
-radius_mm = r / reference_coin[2] * COIN_RADII_MM[100]
+radius_mm = r / reference_coin[2] * COIN_DIAMETERS_MM[100]
 ```
 
 #### 4. Clasificación Multimodal (Tamaño + Color)
