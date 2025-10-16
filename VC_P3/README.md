@@ -228,9 +228,57 @@ def build_binary_mask(img_bgr, morph_kernel_size=5):
 
 #### 2. Detección y Filtrado de Contornos
 Filtrado por área e intersección (IoU) para eliminar solapamientos y ruido.
+```python
+ef detectar_contornos_validos(img, min_area=300, max_area=10000, solapamiento_minimo=True):
+    """Detecta contornos válidos usando build_binary_mask y filtrado posterior"""
+    img_eq, mask = build_binary_mask(img)
+    contours,_ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contours = [c for c in contours if min_area <= cv2.contourArea(c) <= max_area]
+
+    to_remove = set()
+    for i in range(len(contours)):
+        for j in range(i+1,len(contours)):
+            val = iou_boxes(cv2.boundingRect(contours[i]), cv2.boundingRect(contours[j]))
+            if val>0:
+                if cv2.contourArea(contours[i]) < cv2.contourArea(contours[j]): 
+                    to_remove.add(i)
+                else: 
+                    to_remove.add(j)
+
+    return [c for k,c in enumerate(contours) if k not in to_remove]
+```
 
 #### 3. Extracción de Características
 Ocho descriptores geométricos y visuales basados en el trabajo *SMACC (2020)*: área, perímetro, compacidad, relación área/rectángulo, aspecto, ejes, distancias al centroide y intensidad media de color respecto al negro (para textura/coloración).
+```python
+def extraer_features_contornos(img, contours):
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    features, rects = [], []
+    for c in contours:
+        area = cv2.contourArea(c)
+        if area==0: continue
+        perimetro = cv2.arcLength(c, True)
+        x,y,w,h = cv2.boundingRect(c)
+        rel_aspecto = w/h if h else 0
+        rel_area_cont = area/(w*h) if w*h else 0
+        compact = (perimetro**2)/(4*np.pi*area)
+        rel_ejes = 0
+        if len(c)>=5:
+            try: (xc,yc),(MA,ma),ang=cv2.fitEllipse(c); rel_ejes=ma/MA if MA else 0
+            except: rel_ejes=0
+        M = cv2.moments(c)
+        cx,cy=(int(M["m10"]/M["m00"]), int(M["m01"]/M["m00"])) if M["m00"] else (0,0)
+        dists=[np.linalg.norm(np.array([cx,cy])-pt[0]) for pt in c]
+        rel_dist_centroid=min(dists)/max(dists) if dists and max(dists)!=0 else 0
+        mask_obj = np.zeros(gray.shape,np.uint8)
+        cv2.drawContours(mask_obj,[c],-1,255,-1)
+        mean_color = cv2.mean(img, mask=mask_obj)[:3]
+        black_dist = np.linalg.norm(np.array(mean_color)-np.array([0,0,0]))
+        features.append([area, perimetro, compact, rel_area_cont,
+                         rel_aspecto, rel_ejes, rel_dist_centroid, black_dist])
+        rects.append((x,y,w,h))
+    return np.array(features), rects
+```
 
 #### 4. Entrenamiento y Clasificación
 Se construye un conjunto de entrenamiento a partir de tres imágenes, una por clase:
@@ -261,7 +309,7 @@ La clasificación de nuevos objetos se realiza mediante una distancia euclídea 
 
 #### Entrenamiento - Detección de Objetos y Extracción de Características
 ![Detección FRA](entrenamiento-fra.png)  
-![Detección PELLET](entrenamiento-pellet.png)  
+![Detección PELLET](entrenamiento-pel.png)  
 ![Detección TAR](entrenamiento-tar.png)
 
 #### Clasificación sobre Imagen de Test
