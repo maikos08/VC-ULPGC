@@ -1,0 +1,8 @@
+# Ignorar vídeos grandes
+*.mp4
+*.avi
+*.mov
+
+# Ignorar salidas temporales o resultados
+VC_P4/P4/outputs/
+VC_P4/P4/temp/
