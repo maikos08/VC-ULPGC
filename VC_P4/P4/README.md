@@ -8,302 +8,182 @@
 [Entrenando YOLO](#44-entrenando-yolo)  
 [Entrega](#45-entrega)
 
-<!-- MOdelos VLM para OCR https://florence-2.com  -->
+# Práctica 4 — Detección de vehículos y matrículas (Notebook)
 
+Este README resume el notebook `VC_P4.ipynb` que implementa un prototipo para la detección y el seguimiento de personas y vehículos en vídeo, así como la localización (y opcionalmente lectura) de matrículas. Está escrito siguiendo el mismo estilo técnico del README de la Práctica 3.
 
-## 4.1 Aspectos cubiertos
+Contenido principal
+- Objetivo y visión general
+- Requisitos e instalación mínima
+- Descripción de los modos disponibles en el notebook
+- Parámetros principales y cómo ejecutar
+- Salida y formatos generados
+- Notas, limitaciones y extras sugeridos
 
-En esta práctica se aborda el uso de modelos existentes para la detección de objetos y reconocimiento de texto. En concreto, el objetivo de la única tarea que se propone es **desarrollar un prototipo, que procese vídeo para la detección y seguimiento de vehículos y personas**. Si bien cuentan con libertad a la hora de escoger los módulos que integren en el prototipo, les proponemos los siguientes:
+## Objetivo
 
-- un detector de objetos, que permita localizar vehículos y personas,
-- un localizador de matrículas,
+Construir un prototipo que procese un vídeo y realice:
 
-Como modelo de partida para la detección de objetos sugerimos hacer uso de la familia de modelos basados en YOLO proporcionada por [Ultralytics](https://github.com/ultralytics/ultralytics). De cara a localizar las matrículas, son dos las posibilidades a evaluar:
+- Detección y seguimiento de personas y vehículos (basado en modelos YOLO11).
+- Localización de matrículas dentro de las cajas de vehículo (modelo YOLO para placas + opción de refuerzo por EasyOCR).
+- Aplicación de un desenfoque (blur) sobre regiones sensibles: personas y matrículas.
+- Exportación de un vídeo anotado (con blur) y un CSV con las detecciones y metadatos.
 
-- Tras detectar un coche, las zonas probables de la matrícula estarán en su parte inferior, y además se asume que se corresponde a una zona rectangular (su contorno lo es)
-- Una segunda alternativa, plantea realizar un entrenamiento de YOLO para detectar el objeto de interés: matrículas
+El notebook contiene dos variantes de pipeline:
 
-Evaluar ambas opciones se considerará un extra en la evaluación de la tarea. Otros aspectos a valorar, se recogen al final de este documento.
+1. Detección y blur sin OCR (solo localización de matrículas mediante el detector especializado).
+2. Detección y blur con soporte OCR: se usa EasyOCR como apoyo para localizar la matrícula y combinar detecciones YOLO + OCR.
 
-<!--
-[YOLO-NAS](https://github.com/Deci-AI/super-gradients/blob/master/documentation/source/YoloNASQuickstart.md) para mejorar con objetos pequeños y pocos recursos ...
--->
+## Estructura del notebook
 
+- Celdas de configuración: rutas de entrada/salida, modelos y umbrales.
+- Inicialización de modelos:
+	- `model_general` (YOLO11n) para detección general y tracking.
+	- `model_plate` (modelo `best.pt`) para localizar placas.
+	- (opcional) `easyocr.Reader` si se activa la opción OCR.
+- Funciones utilitarias:
+	- `blur_region(img, x1,y1,x2,y2, intensity)` — aplica GaussianBlur limitado a la ROI.
+	- `smooth_coords(prev, new, alpha)` — suavizado exponencial de coordenadas entre frames.
+	- `detect_plate_with_ocr(crop)` — usa EasyOCR para localizar regiones de texto (solo si USE_EASYOCR=True).
+	- `merge_detections(yolo_box, ocr_box)` — combinación heurística YOLO+OCR.
+- Loop principal de procesamiento de vídeo:
+	- Lectura frame a frame usando la API de tracking de Ultralytics (BoT-SORT por defecto).
+	- Aplicación de blur sobre personas y matrículas detectadas.
+	- Escritura del frame resultante a `outputs/salida_anonimizada.mp4`.
+	- Registro de eventos en `outputs/detecciones.csv`.
 
-## 4.2 YOLO
+## Requisitos e instalación
 
-<!-- environment VC_P1 e portátil -->
-
-Tras la presentación en 2023 de yolov8, Ultralytics puso a disposición yolo11 en septiembre de 2024, y yolov12 en marzo de 2025 (actualmenet comentan el próximo anuncio de yolo26 ...). A lo largo del texto, al mencionar YOLO, hacemos referencia al modelo reciente YOLO11. Para su instalación en un nuevo  *environment*, *VC_P4*, seguir los pasos del [tutorial de instalación de Ultralytics](https://docs.ultralytics.com/quickstart/#install-ultralytics). Por incompatibilidades con uno de los OCR vistos posteriormente, hemos hecho uso de la versión de python 3.9.5 y creado un nuevo *environment*.
+Se recomienda un entorno con Python 3.9 (el notebook fue desarrollado y probado con 3.9.x). Instalar los paquetes mínimos:
 
 ```
-conda create --name VC_P4 python=3.9.5
+conda create -n VC_P4 python=3.9 -y
 conda activate VC_P4
-pip install ultralytics
-pip install lap
+pip install ultralytics opencv-python-headless numpy pandas easyocr torch torchvision
 ```
 
-Si no funcina con *lap*, probar
+Notas:
+- Para usar tracking y modelos YOLO con aceleración GPU, instale una versión de `torch` compatible con su CUDA siguiendo https://pytorch.org/get-started/locally/.
+- Si `opencv-python-headless` causa inconvenientes con visualización en notebook, cambiar a `opencv-python`.
+- Si no desea EasyOCR, puede dejar `USE_EASYOCR = False` en el notebook. EasyOCR se usa únicamente para localizar texto; la lectura completa de texto (OCR) no está integrada en el pipeline principal de este notebook.
 
-```
-pip install lapx
-```
+Modelos necesarios (colocar en la misma carpeta del notebook o con rutas absolutas):
 
-Si **cuentas con GPU**, para hacer uso de su potencia de cálculo en el *environment*, necesitas contar con CUDA instalado, y seguir las instrucciones para contar con todos los paquetes compatibles necesarios. Para la instalación, cuentas con esta [guía](https://pytorch.org/get-started/locally/) que te prepara la línea de comando a lanzar. Un ejemplo de la utilizada en mi equipo con CUDAv11.6:
+- `yolo11n.pt`  — modelo general (Ultralytics YOLO11, nombre por defecto en el notebook `GENERAL_MODEL`).
+- `best.pt`     — modelo entrenado para detectar matrículas (referenciado como `PLATE_MODEL`).
+- `botsort.yaml` (o el tracker que prefiera) — configuración utilizada por la API de tracking.
 
-```
-conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.6 -c pytorch -c conda-forge
-```
+## Parámetros principales (editar en el notebook)
 
+- `VIDEO_IN_PATH` — ruta al vídeo de entrada (ej. `C0142.MP4`).
+- `VIDEO_OUT_PATH` — ruta del vídeo resultante con blur aplicado (por defecto `outputs/salida_anonimizada.mp4`).
+- `CSV_OUT_PATH` — ruta del CSV de detecciones (por defecto `outputs/detecciones.csv`).
+- `GENERAL_MODEL`, `PLATE_MODEL` — nombres de los pesos usados (ver arriba).
+- `CONF_THRESHOLD` — umbral de confianza para detecciones de placas (por defecto 0.25).
+- `BLUR_INTENSITY` — control del tamaño del kernel de blur aplicado.
+- `USE_EASYOCR` — si True, activa la detección de regiones por EasyOCR (se ejecuta cada N frames para ahorrar tiempo).
 
-<!-- lap para usar el tracker desde código-->
+Modificar estos parámetros está pensado para hacerse editando las primeras celdas del notebook y volviendo a ejecutar.
 
-Una vez instalada, puede ejecutarse desde línea de comandos con algo como par auno de los modelos de yolo11:
+## Cómo ejecutar
 
+1. Abrir `VC_P4.ipynb` en Jupyter / JupyterLab / VS Code.
+2. Asegurarse de que los pesos (`yolo11n.pt`, `best.pt`) estén en la carpeta de trabajo o apuntar con rutas absolutas.
+3. Ejecutar las celdas de configuración (primera celda) y, a continuación, la celda que inicia el loop principal.
+4. El proceso escribirá:
+	 - Un archivo de vídeo con las regiones desenfocadas en `VIDEO_OUT_PATH`.
+	 - Un CSV con las detecciones en `CSV_OUT_PATH`.
 
-<!-- yolo detect predict model=yolo11n.pt source="C:/Users/otsed/Desktop/RUNNERS_ILUSOS/Multimedia/Bibs/TGC23_PdH_C0056_resultado.mp4"  -->
-```
-yolo detect predict model=yolo11n.pt source="rutaimg_video"
-```
+También puede ejecutar la celda que usa OCR activando `USE_EASYOCR = True` para intentar mejorar la localización de la placa (combinado con detecciones YOLO).
 
-Con *model* se define el modelo preentrenado a utilizar, los resultados los almacena en la carpeta *runs/detect/predict*. Los distintos parámetros
-de la ejecución se describen en la documentación del modo [*predict*](https://docs.ultralytics.com/modes/predict/). El modelo escogido detecta contenedores, para la segmentación semántica (proporciona la máscara del objeto)
-aplicar por ejemplo el modelo *yolov11n-seg.pt*, con un resultado similar al de la imagen.
+## Formato del CSV generado
 
-```
-yolo detect predict model=yolo11n-seg.pt source="rutaimg_video"
-```
-<!-- yolo detect predict model=yolo11n-seg.pt source="C:/Users/otsed/Desktop/RUNNERS_ILUSOS/Multimedia/Bibs/TGC23_PdH_C0056_resultado.mp4"  -->
+El CSV contiene, por fila, la información de detección por frame con las siguientes columnas:
 
-![Segmentación](images/yolo11-seg.jpg)  
-*Resultado del modelo yolo11n-seg.pt con la imagen test.jpg*
+- `frame` — número de frame
+- `tipo_objeto` — clase detectada (person, car, ...)
+- `confianza` — confianza de la detección del objeto
+- `id_tracking` — identificador del track (BoT-SORT)
+- `x1,y1,x2,y2` — coordenadas de la caja del objeto
+- `matricula_detectada` — 1 si se localizó una placa dentro del vehículo, 0 en caso contrario
+- `conf_matricula` — confianza de la detección de la placa
+- `metodo_deteccion` — indica si la placa vino de `yolo`, `ocr` o `yolo+ocr`
+- `mx1,my1,mx2,my2` — coordenadas de la caja de la placa (si detectada)
 
-Otro interesante modelo disponible es el detector de pose, que obtiene un resultado como el de la siguiente imagen.
+## Ejemplo rápido (resumen de comportamiento)
 
+- Personas: se desenfocan completamente sus cajas con `blur_region`.
+- Vehículos: se detecta la caja del vehículo; dentro de ella se busca la placa con `model_plate`; si `USE_EASYOCR=True` se intenta localizar (solo cada N frames para rendimiento) y se fusiona la detección.
+- Las coordenadas de placa se suavizan por track_id para evitar parpadeos entre frames.
 
-```
-yolo pose predict model=yolo11n-pose.pt source="rutaimg_video"
-```
+## Limitaciones y notas
 
-![Segmentación](images/yolo11-pose.jpg)  
-*Resultado del modelo yolo11n-pose.pt con la imagen test.jpg*
+- Calidad de detección de matrículas depende fuertemente de la resolución del recorte del vehículo y del modelo `best.pt` entrenado. Si las placas están muy pequeñas o borrosas, la detección y lectura serán malas.
+- EasyOCR se usa como detector de texto auxiliar y puede añadir carga computacional; por eso en el notebook solo se ejecuta cada N frames.
+- Si va a procesar vídeos largos o en CPU, considere reducir `fps` de salida, aumentar `CONF_THRESHOLD` o procesar una muestra de frames.
+- Para lectura OCR completa y evaluación de texto (normalización y métricas) vea el notebook `VC_P4b/VC_P4b.ipynb` que contiene el ejercicio comparativo entre EasyOCR, Tesseract y PaddleOCR.
 
-<!-- yolo pose predict model=yolo11n-pose.pt source="C:/Users/otsed/Desktop/RUNNERS_ILUSOS/Multimedia/Bibs/TGC23_PdH_C0056_resultado.mp4"  -->
+## Referencias
 
-<!--A este segundo también le añadí la opción "device" para decirle qué tarjetas tiene que usar.-->
+- Ultralytics YOLO: https://github.com/ultralytics/ultralytics
+- EasyOCR: https://github.com/JaidedAI/EasyOCR
+- Documentación PyTorch: https://pytorch.org/
+- ChatGPT: https://chatgpt.com/
+## Ejemplos y fragmentos de código
 
-La versión de yolo de Ultralytics integra la posibilidad de realizar [seguimiento (tracking)](https://docs.ultralytics.com/modes/track/#features-at-a-glance),
-de momento con los modelos **BoT-SORT** (por defecto) y **ByteTrack**.
+A continuación se incluyen fragmentos de código extraídos del notebook para facilitar su copia directa y prueba rápida.
 
+1) Configuración mínima (edita según tus rutas y modelos):
 
-<!-- C:\Users\otsed\Desktop\RUNNERS_ILUSOS\Multimedia\Bibs\TGC23_PdH_C0056.mp4 -->
-```
-yolo track model=yolo11n-pose.pt source="ruta_video"
-```
+```python
+# Config
+VIDEO_IN_PATH = "C0142.MP4"
+VIDEO_OUT_PATH = "outputs/salida_anonimizada.mp4"
+CSV_OUT_PATH = "outputs/detecciones.csv"
 
-En todos los casos, el resultado se almacena en la carpeta *runs*.
+GENERAL_MODEL = "yolo11n.pt"
+PLATE_MODEL = "best.pt"
 
-
-### 4.3 Detectando desde código
-
-En la sección [YOLO](#42-yolo), se presentan varios ejemplos de uso desde línea de comando.
-Para tener más control, interesa manejar el detector de nuestro propio código, en las primeras celdas del cuaderno ejemplo, *VC_P4.ipynb*, se incluyen ejemplos
-de procesamiento y dibujado de las cajas contenedoras haciendo uso del modelo *yolo11n.pt* desde código python procesando la entrada de la webcam, tanto para detección, como para detección y seguimiento.
-En el primer caso, se consideran todas las clases sin realizar ningún tipo de filtrado, mientras que para seguimiento se restringen las clases de interés.
-(También se incluye una celda preparada para procesar un vídeo en disco pudiendo escoger el modelo).
-
-![Segmentación](images/yolov8-tracker.png)  
-*Resultado del BoT-SORT*
-
-Si quieres acceder a vídeos utilizados para evaluar las técnicas de seguimiento, prueba este [enlace](https://motchallenge.net/data/MOT15/).
-
-
-### 4.4 Entrenando YOLO
-
-Tras hacer uso de YOLO como detector, esta sección aborda el entrenamiento personalizado para detectar objetos de nuestro interés, a partir de cajas contenedoras. De cara a la tarea propuesta, los modelos de YOLO no incluyen la detección de matrículas, por lo que se hace necesario realizar entrenar un modelo propio. El vídeo de test proporcionado incluirá principalmente matrículas españolas, siendo una primera subtarea recopilar o capturar imágenes o vídeos que contengan vehículos con su matrícula visible. Si necesitan cámaras, trípode, etc. hablen conmigo.
-
-#### Anotación de imágenes
-
-Son dos los elementos necesarios, por un lado obtener imágenes con muestras del objeto de interés, y por otro lado, herramientas de anotación para posteriormente proporcionarlas en el entrenamiento.
-
-La recopilación de imágenes puede realizarse de distintas maneras
-
-- accediendo a algún conjunto de datos ya existente
-- creando el conjunto de datos
-
-En el segundo caso será necesario recopilar imágenes, pudiendo ser de forma manual, o utilizando utilidades que permitan descargar imágenes realizando búsquedas. Un ejemplo de utilidad, es la proporcionada por [google_images_download](https://pypi.org/project/google_images_download/) que facilita la descarga de un número de imágenes obtenidas realizando búsquedas a través de google.
-
-Tras esta recopilación será necesario en primer término limpiar y filtrar las imágenes, para posteriormente anotar las muestras de nuestro objeto de interés. Asumo una anotación en base a contenedores rectangulares, si bien las herramientas de anotación permiten más variantes.
-
-Si bien existen numerosas herramientas de anotación, las más frecuentes en el grupo han sido:
-
-- [VoTT (Visual Object Tagging Tool)](https://github.com/microsoft/VoTT)
-- [labelme](https://github.com/wkentaro/labelme)
-
-
-La primera de ellas ya no está mantenida. La segunda puede instalarse a través de anaconda, permitiendo distintos tipos de anotación. Para nuestro propósito optaremos por un esquema rectangular. Tras almacenar las anotaciones puede ser necesaria alguna adaptación dependiendo de la red que se use para entrenar.
-
-```
-conda create --name=labelme python=3.9
-conda activate labelme
-pip install labelme
+CONF_THRESHOLD = 0.25
+BLUR_INTENSITY = 61
+USE_EASYOCR = True
 ```
 
-Una vez instalado *labelme*, el proceso desde *Anaconda Prompt*:
+2) Función de blur:
 
-- Teclear *labelme*
-- Una vez abierta la interfaz, seleccionar la carpeta con imágenes a anotar
-- En nuestro caso, que anotaremos zonas rectangulares, escoger *Edit->Create Rectangle*
-
-La anotación genera un *json* para cada imagen. Sugerir en cualquier caso echar un vistazo a la [documentación sobre el uso](https://github.com/wkentaro/labelme#usage).
-
-No es obligatorio utilizar esta herramienta en concreto, hay numerosas y podrás encontrar comparativas.
-Existen también numerosos servicios en la nube, como por ejemplo [Roboflow](https://app.roboflow.com/login) que requieren crearse una cuenta para acceder a las utilidades, [CVAT](https://www.cvat.ai) o [TigTag](https://www.tictag.io) que permite anotar desde el móvil. Te invito a explorar y escoger la herramienta que más te atraiga para el proceso de anotación.
-
-Lo importante es que sea cómoda y fácil de usar, y se agradece que permita exportar a varios formatos, incluyendo YOLO, que es el que será necesario para realizar el entrenamiento con YOLO.
-
-<!---Momentos en trabajo de Nayar sobre Binary images https://cave.cs.columbia.edu/Statics/monographs/Binary%20Images%20FPCV-1-3.pdf -->
-
-<!-- Guías CVAT
-https://www.simonwenkel.com/lists/software/list-of-annotation-tools-for-machine-learning-research.html
-https://www.v7labs.com/blog/cvat-guide
--->
-
-#### Entrenamiento
-
-Tras utilizar uno o varios modelos preentrenados de YOLO para detección, el propósito de este apartado es aportar las pautas para entrenar un detector basado en YOLO del objeto u objetos que nos sea de interés.
-
-Una vez recopiladas las imágenes y realizadas las anotaciones, antes de proceder a entrenar con YOLO, es necesario disponer las imágenes de determinada forma, y posteriormente especificar las rutas en la llamada. La siguiente imagen
-muestra la estructura de directorios creadas para un conjunto de datos denominado *TGCRBNW*.
-
-![Directorios](images/dirs.png)
-
-Contiene tres subcarpetas:
-
-- *test*
-- *train*
-- *val*
-
-Cada una de ellas a su vez contiene dos subcarpetas:
-
-- *images*
-- *labels*
-
-La primera de ellas contiene las imágenes que se han anotado, mientras que la segunda carpeta contiene para cada imagen anotada su archivo *.txt* homónimo con las correspondientes anotaciones de la imagen. Recordar que el formato esperado por YOLO debe ser algo como:
-
-```
-<object-class-id> <x> <y> <width> <height>
+```python
+def blur_region(img, x1, y1, x2, y2, intensity=BLUR_INTENSITY):
+	h, w = img.shape[:2]
+	x1, y1, x2, y2 = map(int, [max(0, x1), max(0, y1), min(w, x2), min(h, y2)])
+	if x2 <= x1 or y2 <= y1:
+		return img
+	roi = img[y1:y2, x1:x2]
+	k = intensity if (x2 - x1) > 30 else 15
+	k = k if k % 2 == 1 else k + 1
+	blurred = cv2.GaussianBlur(roi, (k, k), 0)
+	img[y1:y2, x1:x2] = blurred
+	return img
 ```
 
-Los datos de cada línea se refieren a:
+3) Combinar detecciones YOLO + OCR:
 
-- *object-class-id*: identificador numérico de la clase del objeto anotado
-- *x*: coordenada *x* del centro de la ventana
-- *y*: coordenada *y* del centro de la ventana
-- *width*: ancho del contenedor
-- *height*: alto del contenedor
+```python
+def merge_detections(yolo_box, ocr_box):
+	if yolo_box is None and ocr_box is None:
+		return None
+	if yolo_box is None:
+		return ocr_box
+	if ocr_box is None:
+		return yolo_box
 
-Las coordenadas del centro y dimensiones del contenedor estarán normalizadas, es decir, divididas por las dimensiones de la imagen.
+	# yolo_box: (x1,y1,x2,y2,conf)
+	yx1, yy1, yx2, yy2, yconf = yolo_box
+	ox1, oy1, ox2, oy2, oconf = ocr_box
 
-Para distribuir las imágenes en las tres subcarpetas, debemos llevar a cabo un reparto. Lo habitual es realizar una división aleatoria, donde por ejemplo podemos hacer uso de un 80% para entrenamiento y validación, y un 20% para test. Dentro del primer grupo, puedes optar de nuevo a una división 80/20 o 90/10.
-
-Una vez conformada la estructura de directorios y distribuidas las imágenes, he procedido a crear, en mi caso dentro de la carpeta *data*, un archivo *.yaml* que permite especificar las rutas de las imágenes que se proporcionan para entrenamiento, validación y test, además del número de clases a considerar, y sus nombres. En mi caso con una única clase:
-
-```
-# TGCRBNW paths
-
-# train and val data as 1) directory: path/images/, 2) file: path/images.txt, or 3) list: [path1/images/, path2/images/]
-train: C:/Users/otsed/Desktop/RUNNERS/Datasets/TGC_RBNW/train/
-val: C:/Users/otsed/Desktop/RUNNERS/Datasets/TGC_RBNW/val/  
-test: C:/Users/otsed/Desktop/RUNNERS/Datasets/TGC_RBNW/test/  
-
-# number of classes
-nc: 1
-
-# class names
-names: [ 'bib' ]
+	return yolo_box if yconf > oconf else ocr_box
 ```
 
-A partir de este punto es posible lanzar el entrenamiento. Un par de variantes especificando o no el número de épocas, indicando el tamaño de las imágenes a considerar (por defecto 640), y los pesos tomados como punto de partida:
+## Imágenes de ejemplo del vídeo resultante
 
-
-El código para entrenar YOLO desde CPU:
-
-```
-yolo detect train model=yolo11n.pt data=data/miarchivo.yml imgsz=416 batch=4 device=CPU epochs=40
-```
-
-Si disponemos de GPU:
-
-```
-yolo detect train model=yolo11n.pt data=data/miarchivo.yml imgsz=416 batch=4 device=0[,1,2,3] epochs=40
-```
-
-Para entrenar con GPU, recordar que puede serte útil acceder a las instrucciones para [instalar pytorch local](https://pytorch.org/get-started/locally/) de cara a conocer el comando necesario para instalarlo en tu *environment*. Chequea la versión de CUDA en tu equipo, puede que tengas que buscar en el enlace para versiones previas de pytorch.
-
-
-<!--En mi equipo de despacho, donde ya tenía CUDA presente
-
-```
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-No fue
-
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8 -c pytorch -c nvidia
-
-se queja de openssl
-
-Con yolov7 usé
-conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.6 -c pytorch -c conda-forge
-
-```
-
-
- Error OpenSSL https://github.com/conda/conda/issues/11982
-go to location where you've install anaconda anaconda3>Library>bin. search and copy following dll files
-
-libcrypto-1_1-x64.dll
-libssl-1_1-x64.dll
-
-and paste to anaconda3>DLLs.
-
-then restart your pc.
-
-issue will get resolved. This will solve the issue. Thank you Mahesh2519
--->
-
-El entrenamiento puede llevarse a cabo en CPU, siendo sensiblemente más lento que si contamos con GPU. También es posible hacer uso de Colab ( [tutorial para ejecutar en Colab](https://machinelearningprojects.net/train-yolov7-on-the-custom-dataset/).
-Finalizado el entreno localmente, en la carpeta *runs/detect/trainX* se encuentra el resultado. Ya estarías en disposición de probarlo, desde línea de comando o en tu propio código.
-
-
-
-### 4.6. Entrega
-
-Para la entrega de esta práctica, la tarea consiste en desarrollar un prototipo que procese uno ([vídeo ejemplo proporcionado](https://alumnosulpgc-my.sharepoint.com/:v:/g/personal/mcastrillon_iusiani_ulpgc_es/EXRsnr4YuQ9CrhcekTPAD8YBMHgn16KwlunFg32iZM0xVQ?e=kzuw4l) o varios vídeos (incluyendo vídeos de cosecha propia)):
-
-- detecte y siga las personas y vehículos presentes
-- detecte las matrículas de los vehículos presentes
-- cuente el total de cada clase
-- vuelque a disco un vídeo que visualice los resultados
-- genere un archivo csv con el resultado de la detección y seguimiento. Se sugiere un formato con al menos los siguientes campos:
-
-```
-fotograma, tipo_objeto, confianza, identificador_tracking, x1, y1, x2, y2, matrícula_en_su_caso, confianza, mx1,my1,mx2,my2, texto_matricula
-```
-
-La **entrega del cuaderno o cuadernos** se hace efectiva a través del campus virtual por medio de un **enlace github**. Además del **archivo README**, debe incluirse el resultado del vídeo proporcionado como test (o enlace al mismo), y el correspondiente archivo *csv*. En el caso de entrenarse algún detector, por ejemplo de matrículas, debe proporcionarse acceso al conjunto de datos.
-
-
-Se considerarán extras:
-
-- Determine el flujo de personas y vehículos en el vídeo de test en distintas direcciones (vehículos que dejan la imagen por la derecha, por la izquierda, etc.)
-- Participar en
-- Evaluar dos alternativas para la detección de matrículas: basada en YOLO, y basada en contornos.
-- Anonimizar a las personas y vehículos presentes en un vídeo.
-<!-- - En el caso de haberse apuntado al [Autumn Campus Makeathon InnovAction Canarias](https://www.ulpgc.es/agenda/2024/10/24/autumn-campus-makeathon2), se valorará la aplicación de habilidades adquiridas en esta práctica. -->
-
-
-
-
-***
-Bajo licencia de Creative Commons Reconocimiento - No Comercial 4.0 Internacional
+![Matriz de confusión](Captura-readme1.png)
+![Matriz de confusión](Captura-readme2.png)
