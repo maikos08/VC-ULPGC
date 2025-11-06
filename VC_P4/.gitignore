@@ -9,3 +9,7 @@ VC_P4/P4/temp/
 
 # Ignorar datasets e outputs específicos del P4b
 *output_dataset.zip
+
+# Matriculas
+*Matriculas/*
+*Matriculas.zip
