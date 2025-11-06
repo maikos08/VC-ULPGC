@@ -157,13 +157,20 @@ El CSV [`comparativa_ocr.csv`](https://github.com/maikos08/VC-ULPGC/blob/main/VC
 [![Ver demo](https://img.youtube.com/vi/NpHFdu5RNl0/0.jpg)](https://youtu.be/NpHFdu5RNl0)
 
 En el vídeo no se detecta bien casi ninguna matrícula. Para ver lo que está pasando con cada frame en el video cogimos diferentes capturas para poder debuggear.
+
 ![Ejemplo 0116GPD](capturas/Captura1.png)
 ![Ejemplo 0116GPD](capturas/Captura2.png)
 ![Ejemplo 0116GPD](capturas/Captura3.png)
 ![Ejemplo 0116GPD](capturas/Captura4.png)
 ![Ejemplo 0116GPD](capturas/Captura5.png)
 
+Estas capturas las pasamos por el modelo y entendimos que no las leía bien por el desenfoque del movimiento mientras se están moviendo los coches.
 
+![Ejemplo 0116GPD](capturas/Captura1_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura2_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura3_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura4_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura5_ocr.png)
 ---
 
 ## 💡 Notas y recomendaciones
