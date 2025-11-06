@@ -1,83 +1,126 @@
+# Práctica 4b — Comparativa OCR sobre matrículas
 
-## Práctica 4b. Reconocimiento de caracteres en matrículas
+Este README resume el notebook `VC_P4b.ipynb`, que contiene un ejercicio práctico para comparar el rendimiento de distintos motores OCR (EasyOCR y Tesseract, con hooks para PaddleOCR) sobre un dataset de recortes de matrículas. El notebook realiza:
 
-### Contenidos
+- extracción de recortes (a partir de etiquetas YOLO),
+- preprocesado y lectura con EasyOCR y Tesseract,
+- normalización y métricas (Levenshtein, accuracy carácter),
+- guardado de resultados en CSV y ejemplos visuales.
 
-[Tarea](#51-aspectos-cubiertos)  
-[OCRs](#52-ocrs)  
-[VLMs](#53-vlms)  
-[Entrega](#54-entrega)
+Repositorio / Estructura
 
-<!-- MOdelos VLM para OCR https://florence-2.com  -->
+- `VC_P4/P4b/VC_P4b.ipynb` — notebook principal con bloques numerados (config, carga de modelos, funciones OCR, prueba por imagen, procesamiento completo, estadísticas, y pipeline de vídeo con OCR).
+- `VC_P4/P4b/ejemplos/` — imágenes de ejemplo generadas por el notebook (recortes y comparativas). Algunas muestras: `0116GPD.png`, `0290KWT.png`, `0303BML.png`.
+- `VC_P4/P4b/ocr_comparison_results/` — carpeta de salida generada por el notebook al procesar el dataset: `comparativa_ocr.csv`, `ejemplos/`, `comparativa_grafica.png`..
+- `VC_P4/P4b/outputs/` — carpeta de salida generada por el notebook al procesar el video: `detecciones_ocr.csv` y `salida_con_ocr.mp4`.
 
+## Requisitos mínimos
 
-## 5.1 Aspectos cubiertos
+El notebook utiliza las siguientes librerías (instalación orientativa):
 
-En esta práctica se aborda el uso de modelos existentes para el reconocimiento de texto, el objetivo es el de expandir el detector de coches y matrículas de la anterior tarea
-para que sea capaz de **reconocer los caracteres en las matrículas visibles** y así ser capaces de identificar el coche correctamente.
-
-En la actualidad suele haber dos vías a la hora de plantear un modelo que realice reconocimiento óptico de caracteres (OCR). La primera sería usar una red neuronal especializada en detectar e identificar el texto en la imagen. Por su parte, la segunda manera correspondería a usar un modelo de lenguaje visual (VLM por sus siglas en inglés) como podrían ser GPT-4o o Gemini 2.5 para extraer directamente la información de la imagen. Estas dos maneras de enfocar el problema representan el clásico balance entre una solución rápida (red neuronal) y una solución con una mayor tasa de acierto pero más costosa computacionalmente (VLM's).
-
-En la práctica de hoy propondremos el uso de al menos dos modelos para hacer algunas comparaciones entre ellos y complementar la anterior práctica con la extracción del texto de las matrículas.
-
-### 5.2 OCRs
-
-Como reconocedores de caracteres basados en redes neuronales clásicas, proponemos tres opciones: Tesseract, easyOCR y PaddleOCR. Para los tres, el cuaderno proporcionado esta semana incluye demostradores mínimos. Otra posibilidad es [KERAS-OCR](https://github.com/faustomorales/keras-ocr), o [dots.ocr](https://github.com/rednote-hilab/dots.ocr), de los que no ilustramos su uso en este cuaderno.
-<!-- Al ser un nuevo *environment* no olvidar  que es necesario instalar el paquete para ejecutar cuadernos, desde consola-->
-
-Por un lado, el conocido [Tesseract](https://github.com/tesseract-ocr/tesseract), requiere desde python un *wrapper*, previa instalación.
-La documentación de [Tesseract](https://tesseract-ocr.github.io/tessdoc/Installation.html) dispone de **información para su instalación en distintas plataformas**.
-Para entorno WIdnows:
-
-- Decargar los binarios desde el repositorio para tal fin de la [Universidad Manheim](https://github.com/UB-Mannheim/tesseract/wiki).
-- Ejecutar el archivo descargado para lsu instalación
-- Durante la instalación, he indicado que incluya datos de otros lenguajes, en mi caso español
-- Anotar la ruta donde se instala, dado que debe especificarse en el código python. O añadir al *PATH*.
-- Instalar el *wrapper* [pytesseract](https://pypi.org/project/pytesseract/) ven el *environment* *VC_P4*:
-
-```
-pip install pytesseract
+```bash
+conda create -n VC_P4b python=3.9 -y
+conda activate VC_P4b
+pip install opencv-python numpy matplotlib pandas easyocr pytesseract torch
 ```
 
-Por otro lado, [easyOCR](https://github.com/JaidedAI/EasyOCR) ofrece soporte para más de 80 lenguas. Su instalación es a priori más simple, basta con:
+Además es necesario tener instalado Tesseract OCR y configurar la ruta `TESSERACT_PATH` en el notebook (por defecto `C:\Program Files\Tesseract-OCR\tesseract.exe` en Windows).
 
+## Cómo usar el notebook (pasos rápidos)
+
+1. Abrir `VC_P4b.ipynb` en Jupyter/VSCode.
+2. Editar la celda de configuración (BLOCK 1) para apuntar a `DATASET_DIR` y `TESSERACT_PATH` si es necesario.
+3. Ejecutar las celdas en orden:
+   - BLOQUE 1: configuración y utilidades
+   - BLOQUE 2: carga de modelos (EasyOCR)
+   - BLOQUE 3: funciones OCR (normalización y lectura)
+   - BLOQUE 4: prueba con una imagen
+   - BLOQUE 5: procesamiento completo del dataset
+   - BLOQUE 6: estadísticas y gráficas
+
+Al final se generará `ocr_comparison_results/comparativa_ocr.csv` y ejemplos en `ocr_comparison_results/ejemplos/`.
+
+4. Ejecutar la última celda para obtener las matrículas en el vídeo
+
+Al final se generará `VC_P4/P4b/outputs/`
+
+## Fragmentos útiles
+
+1) Configuración (extraída del BLOQUE 1):
+
+```python
+DATASET_DIR = "../Matriculas"
+LABELS_DIR = os.path.join(DATASET_DIR, "labels")
+IMAGES_DIR = DATASET_DIR
+TESSERACT_PATH = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+OUTPUT_DIR = "ocr_comparison_results"
+RESULTS_CSV = os.path.join(OUTPUT_DIR, "comparativa_ocr.csv")
+SAVE_EXAMPLES = True
 ```
-pip install easyocr
+
+2) Lectura y normalización (funciones centrales):
+
+```python
+def clean_text(text):
+    return re.sub(r"[^A-Z0-9]", "", text.upper())
+
+def fix_common_errors(text):
+    text = text.replace('O', '0').replace('I', '1').replace('Q', '0')
+    return text
+
+def normalize_plate(text, ground_truth=""):
+    # Aplica limpieza y reglas heurísticas para intentar formar
+    # una matrícula española estándar (4 números + 3 letras) u otras variantes.
+    text = clean_text(text)
+    text = fix_common_errors(text)
+    # ... lógica adicional en el notebook para elegir el mejor patrón
+    return text
 ```
 
-Pero surge una **incidencia** con OpenCV, dado que funciones de visualización, como *imshow*, dejan de estar presentes. Observando la incompatibilidad entre la instalación de YOLO y easyOCR,
-puedes llegar a un punto en que la instalación de OpenCV no sea completa para nuestro cuaderno. Lo hemos conseguido resolver con:
+3) Procesamiento por imagen (recorte y ejecución de OCR):
 
+```python
+def process_image_ocr(img_path, label_path, ground_truth, save_example=False):
+    img = cv2.imread(img_path)
+    yolo_coords = read_yolo_label(label_path)
+    x1, y1, x2, y2 = yolo_to_bbox(yolo_coords, img.shape)
+
+    # Ajuste heurístico para placas modernas
+    x1_new = x1 + int((x2 - x1) * 0.10)
+    crop = img[y1:y2, x1_new:x2].copy()
+    crop_resized = cv2.resize(crop, None, fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
+
+    # EasyOCR
+    results = reader.readtext(crop_resized, paragraph=True, detail=0)
+    easy_raw = " ".join(results).upper()
+
+    # Tesseract
+    gray = cv2.cvtColor(crop_resized, cv2.COLOR_BGR2GRAY)
+    _, enhanced = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    tess_raw = pytesseract.image_to_string(enhanced, config="--oem 1 --psm 7 -l spa").strip().upper()
+
+    # Normalizar y devolver métricas
+    easy_norm = normalize_plate(easy_raw, ground_truth)
+    tess_norm = normalize_plate(tess_raw, ground_truth)
+    return { 'easy_normalized': easy_norm, 'tess_normalized': tess_norm }
 ```
-pip uninstall opencv-python opencv-python-headless
-pip install opencv-python --upgrade
-```
 
-Por último, [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) es la solución de OCR propuesta por la empresa china PaddlePaddle y ofrece, al igual que EasyOCR, soporte para más de 80 idiomas, incluyendo el Español. Su instalación consta de dos pasos, primero hay que instalarse la librería de PaddlePaddle usando el comando que se corresponda a nuestra máquina en la [web oficial](https://www.paddlepaddle.org.cn/en/install/quick?docurl=/documentation/docs/en/develop/install/pip/windows-pip_en.html) de forma muy similar a torch. Posteriormente, se instala el OCR usando el comando en la consola:
+## Ejemplos visuales de la clasificación
 
-```
-pip install paddleocr
-```
+![Ejemplo 0116GPD](images/0116GPD.png)
+![Ejemplo 0116GPD](images/0476MNN.png)
+![Ejemplo 0116GPD](images/0962LLT.png)
+![Ejemplo 0116GPD](images/0416MLX.png)
 
-### 5.3 VLMs
+## Salida esperada y CSV
 
-Como VLM para realizar OCR solamente mostraremos el uso de uno, [SmolVLM](https://huggingface.co/blog/smolvlm), esto se debe principalmente a la alta cantidad de recursos que necesitan estos modelos para ser ejecutados en local, lo cual los hace díficil de usar en un entorno sin GPU. SmolVLM es un VLM introducido en noviembre del 2024 creado especificamente para competir con modelos más grandes sin por ello usar una gran cantidad de memoria. Aunque permita un uso general, en esta práctica lo usaremos únicamente por sus capacidades de OCR.
-Para su uso tendremos que instalar dos librerias diferentes: torch, haciendo uso de la [web oficial](https://pytorch.org/get-started/locally/) para obtener el comando que se corresponda a nuestro PC y la librería transformers de [HuggingFace](https://huggingface.co). La librería transformers nos permite descargar y usar fácilmente modelos entrenados por la comunidad en nuestro ordenador. Para su instalación simplemente:
+El CSV `ocr_comparison_results/comparativa_ocr.csv` incluye columnas como:
 
-```
-pip install transformers
-```
+- `imagen`, `ground_truth`, `easy_raw`, `easy_normalized`, `easy_accuracy`, `easy_levenshtein`, `easy_time`,
+- `tess_raw`, `tess_normalized`, `tess_accuracy`, `tess_levenshtein`, `tess_time`
 
-Otras posibilidades podrían ser los modelos de la familia [Idefics](https://huggingface.co/blog/idefics2) de la propia HuggingFace, [Florence-2](https://huggingface.co/microsoft/Florence-2-large) de Microsoft o [PaliGemma](https://huggingface.co/blog/paligemma2) de Google.
+## Notas y recomendaciones
 
-
-### 5.4 Entrega
-
-Para la entrega de esta práctica habrá que complementar la tarea de la Práctica 4 para extraer también el número de matrícula de los diferentes vehículos. Además. habrá que hacer una pequeña comparativa entre dos o más de los modelos propuestos en términos de tiempo de inferencia y tasa de acierto con la base de datos que se haya seleccionado para el entrenamiento de la práctica anterior u otra.
-
-La **entrega** se hará junto a la de la anterior práctica, incluyendo en el vídeo de test una visualización de la matrícula leída y en el csv de volcado una columna con la matrícula correspondiente. La comparativa deberá hacerse dentro del propio README, incluyendo gráficas de tiempos y rendimiento, así como unas pequeñas conclusiones.
-
-
-***
-Bajo licencia de Creative Commons Reconocimiento - No Comercial 4.0 Internacional
-
+- Ajusta `TESSERACT_PATH` según tu sistema.
+- Si obtienes lecturas con caracteres repetidos o ruido, prueba a aumentar el zoom del recorte (fx/fy) o aplicar técnicas de realce (CLAHE, top-hat) antes de OCR.
+- Considera ejecutar una heurística que elija entre EasyOCR y Tesseract según Levenshtein contra una lista de formatos válidos.
