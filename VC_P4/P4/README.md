@@ -1,189 +1,202 @@
-## Práctica 4. Detección de vehículos y matrículas
+# 🚗 Práctica 4 — Detección de Vehículos y Matrículas
 
-### Contenidos
+## 👥 Autores
+- Alberto José Rodríguez Ruano  
+- Miguel Ángel Rodríguez Ruano  
 
-[Tarea](#41-aspectos-cubiertos)  
-[YOLO](#42-yolo)  
-[Detectando](#43-detectando-desde-muestro-codigo)  
-[Entrenando YOLO](#44-entrenando-yolo)  
-[Entrega](#45-entrega)
+---
 
-# Práctica 4 — Detección de vehículos y matrículas (Notebook)
+## 🧠 Descripción general
+Este proyecto implementa un prototipo basado en visión por computador para la detección, seguimiento y anonimización (blur) de personas y vehículos en vídeo, incluyendo la localización de matrículas mediante modelos YOLO11 .  
+El notebook principal es `VC_P4.ipynb`.
 
-Este README resume el notebook `VC_P4.ipynb` que implementa un prototipo para la detección y el seguimiento de personas y vehículos en vídeo, así como la localización (y opcionalmente lectura) de matrículas. Está escrito siguiendo el mismo estilo técnico del README de la Práctica 3.
+---
 
-Contenido principal
-- Objetivo y visión general
-- Requisitos e instalación mínima
-- Descripción de los modos disponibles en el notebook
-- Parámetros principales y cómo ejecutar
-- Salida y formatos generados
-- Notas, limitaciones y extras sugeridos
+## 📚 Contenidos
+- Objetivo  
+- Estructura del notebook  
+- Requisitos e instalación  
+- Parámetros principales  
+- Cómo ejecutar  
+- Formato del CSV  
+- Ejemplo rápido  
+- Limitaciones y notas  
+- Referencias  
+- Fragmentos útiles  
 
-## Objetivo
+---
 
-Construir un prototipo que procese un vídeo y realice:
+## 🎯 Objetivo
+Procesar un vídeo y realizar:
+- Detección y seguimiento de personas y vehículos (YOLO11).
+- Localización de matrículas dentro de vehículos (YOLO + EasyOCR opcional).
+- Aplicar desenfoque selectivo sobre regiones sensibles.
+- Exportar un vídeo anonimizado y un CSV con metadatos.
 
-- Detección y seguimiento de personas y vehículos (basado en modelos YOLO11).
-- Localización de matrículas dentro de las cajas de vehículo (modelo YOLO para placas + opción de refuerzo por EasyOCR).
-- Aplicación de un desenfoque (blur) sobre regiones sensibles: personas y matrículas.
-- Exportación de un vídeo anotado (con blur) y un CSV con las detecciones y metadatos.
+### Variantes
+1. Sin OCR: detección + blur con YOLO.  
+2. Con OCR: detección combinada YOLO + EasyOCR.
 
-El notebook contiene dos variantes de pipeline:
+---
 
-1. Detección y blur sin OCR (solo localización de matrículas mediante el detector especializado).
-2. Detección y blur con soporte OCR: se usa EasyOCR como apoyo para localizar la matrícula y combinar detecciones YOLO + OCR.
+## 🧩 Estructura del notebook
+- Configuración: rutas, modelos y umbrales.  
+- Modelos:  
+  - model_general (YOLO11n) para detección general.  
+  - model_plate (best.pt) para matrículas.  
+  - easyocr.Reader opcional.  
+- Funciones utilitarias:  
+  - blur_region()  
+  - smooth_coords()  
+  - detect_plate_with_ocr()  
+  - merge_detections()  
+- Loop principal: procesamiento de vídeo frame a frame con tracking BoT-SORT.
 
-## Estructura del notebook
+---
 
-- Celdas de configuración: rutas de entrada/salida, modelos y umbrales.
-- Inicialización de modelos:
-	- `model_general` (YOLO11n) para detección general y tracking.
-	- `model_plate` (modelo `best.pt`) para localizar placas.
-	- (opcional) `easyocr.Reader` si se activa la opción OCR.
-- Funciones utilitarias:
-	- `blur_region(img, x1,y1,x2,y2, intensity)` — aplica GaussianBlur limitado a la ROI.
-	- `smooth_coords(prev, new, alpha)` — suavizado exponencial de coordenadas entre frames.
-	- `detect_plate_with_ocr(crop)` — usa EasyOCR para localizar regiones de texto (solo si USE_EASYOCR=True).
-	- `merge_detections(yolo_box, ocr_box)` — combinación heurística YOLO+OCR.
-- Loop principal de procesamiento de vídeo:
-	- Lectura frame a frame usando la API de tracking de Ultralytics (BoT-SORT por defecto).
-	- Aplicación de blur sobre personas y matrículas detectadas.
-	- Escritura del frame resultante a `outputs/salida_anonimizada.mp4`.
-	- Registro de eventos en `outputs/detecciones.csv`.
+## ⚙️ Requisitos e instalación
+Crear entorno con Python 3.9:
 
-## Requisitos e instalación
-
-Se recomienda un entorno con Python 3.9 (el notebook fue desarrollado y probado con 3.9.x). Instalar los paquetes mínimos:
-
-```
+```bash
 conda create -n VC_P4 python=3.9 -y
 conda activate VC_P4
 pip install ultralytics opencv-python-headless numpy pandas easyocr torch torchvision
 ```
 
+
 Notas:
-- Para usar tracking y modelos YOLO con aceleración GPU, instale una versión de `torch` compatible con su CUDA siguiendo https://pytorch.org/get-started/locally/.
-- Si `opencv-python-headless` causa inconvenientes con visualización en notebook, cambiar a `opencv-python`.
-- Si no desea EasyOCR, puede dejar `USE_EASYOCR = False` en el notebook. EasyOCR se usa únicamente para localizar texto; la lectura completa de texto (OCR) no está integrada en el pipeline principal de este notebook.
+- Si se desea usar GPU, instalar torch con CUDA desde pytorch.org.
+- Si opencv-python-headless causa problemas, usar opencv-python.
+- Si no se usa OCR, dejar USE_EASYOCR=False.
 
-Modelos necesarios (colocar en la misma carpeta del notebook o con rutas absolutas):
+### Modelos requeridos
+Colocar los pesos en la carpeta del notebook:
+- yolo11n.pt → modelo general.
+- best.pt → detector de matrículas.
+- botsort.yaml → configuración del tracker.
 
-- `yolo11n.pt`  — modelo general (Ultralytics YOLO11, nombre por defecto en el notebook `GENERAL_MODEL`).
-- `best.pt`     — modelo entrenado para detectar matrículas (referenciado como `PLATE_MODEL`).
-- `botsort.yaml` (o el tracker que prefiera) — configuración utilizada por la API de tracking.
+---
 
-## Parámetros principales (editar en el notebook)
+## 🧰 Parámetros principales
+Parámetro | Descripción | Valor por defecto
+-----------|--------------|------------------
+VIDEO_IN_PATH | Ruta del vídeo de entrada | C0142.MP4
+VIDEO_OUT_PATH | Vídeo anonimizado | outputs/salida_anonimizada.mp4
+CSV_OUT_PATH | CSV de detecciones | outputs/detecciones.csv
+GENERAL_MODEL | Modelo YOLO general | yolo11n.pt
+PLATE_MODEL | Modelo de matrículas | best.pt
+CONF_THRESHOLD | Umbral de confianza | 0.25
+BLUR_INTENSITY | Nivel de desenfoque | 61
+USE_EASYOCR | Activar OCR auxiliar | False
 
-- `VIDEO_IN_PATH` — ruta al vídeo de entrada (ej. `C0142.MP4`).
-- `VIDEO_OUT_PATH` — ruta del vídeo resultante con blur aplicado (por defecto `outputs/salida_anonimizada.mp4`).
-- `CSV_OUT_PATH` — ruta del CSV de detecciones (por defecto `outputs/detecciones.csv`).
-- `GENERAL_MODEL`, `PLATE_MODEL` — nombres de los pesos usados (ver arriba).
-- `CONF_THRESHOLD` — umbral de confianza para detecciones de placas (por defecto 0.25).
-- `BLUR_INTENSITY` — control del tamaño del kernel de blur aplicado.
-- `USE_EASYOCR` — si True, activa la detección de regiones por EasyOCR (se ejecuta cada N frames para ahorrar tiempo).
+Editar estos valores en las primeras celdas del notebook.
 
-Modificar estos parámetros está pensado para hacerse editando las primeras celdas del notebook y volviendo a ejecutar.
+---
 
-## Cómo ejecutar
+## ▶️ Cómo ejecutar
+1. Abrir VC_P4.ipynb en Jupyter o VSCode.  
+2. Asegurarse de que los pesos estén disponibles.  
+3. Ejecutar las celdas en orden: configuración → carga de modelos → loop principal.  
+4. Se generarán:
+   - outputs/salida_anonimizada.mp4  
+   - outputs/detecciones.csv  
 
-1. Abrir `VC_P4.ipynb` en Jupyter / JupyterLab / VS Code.
-2. Asegurarse de que los pesos (`yolo11n.pt`, `best.pt`) estén en la carpeta de trabajo o apuntar con rutas absolutas.
-3. Ejecutar las celdas de configuración (primera celda) y, a continuación, la celda que inicia el loop principal.
-4. El proceso escribirá:
-	 - Un archivo de vídeo con las regiones desenfocadas en `VIDEO_OUT_PATH`.
-	 - Un CSV con las detecciones en `CSV_OUT_PATH`.
+Si USE_EASYOCR=True, EasyOCR refinará la detección de matrículas cada N frames.
 
-También puede ejecutar la celda que usa OCR activando `USE_EASYOCR = True` para intentar mejorar la localización de la placa (combinado con detecciones YOLO).
+---
 
-## Formato del CSV generado
+## 📊 Formato del CSV generado
+Cada fila representa una detección por frame:
 
-El CSV contiene, por fila, la información de detección por frame con las siguientes columnas:
+Columna | Descripción
+--------|-------------
+frame | Número de frame
+tipo_objeto | Clase detectada (person, car…)
+confianza | Confianza de la detección
+id_tracking | ID de seguimiento (BoT-SORT)
+x1,y1,x2,y2 | Coordenadas de la caja
+matricula_detectada | 1 si hay placa, 0 si no
+conf_matricula | Confianza de la placa
+metodo_deteccion | yolo, ocr o yolo+ocr
+mx1,my1,mx2,my2 | Coordenadas de la caja de la placa
 
-- `frame` — número de frame
-- `tipo_objeto` — clase detectada (person, car, ...)
-- `confianza` — confianza de la detección del objeto
-- `id_tracking` — identificador del track (BoT-SORT)
-- `x1,y1,x2,y2` — coordenadas de la caja del objeto
-- `matricula_detectada` — 1 si se localizó una placa dentro del vehículo, 0 en caso contrario
-- `conf_matricula` — confianza de la detección de la placa
-- `metodo_deteccion` — indica si la placa vino de `yolo`, `ocr` o `yolo+ocr`
-- `mx1,my1,mx2,my2` — coordenadas de la caja de la placa (si detectada)
+---
 
-## Ejemplo rápido (resumen de comportamiento)
+## ⚡ Ejemplo rápido
+👤 Personas → se desenfocan completamente con blur_region.  
+🚗 Vehículos → se detecta placa con model_plate.  
+🔠 OCR → si está activo, EasyOCR refina detecciones y se fusiona con YOLO.  
+📉 Suavizado → smooth_coords evita parpadeos entre frames.
 
-- Personas: se desenfocan completamente sus cajas con `blur_region`.
-- Vehículos: se detecta la caja del vehículo; dentro de ella se busca la placa con `model_plate`; si `USE_EASYOCR=True` se intenta localizar (solo cada N frames para rendimiento) y se fusiona la detección.
-- Las coordenadas de placa se suavizan por track_id para evitar parpadeos entre frames.
+---
 
-## Limitaciones y notas
+## ⚠️ Limitaciones
+- La calidad depende de la resolución y del modelo best.pt.
+- EasyOCR añade carga computacional; se ejecuta cada N frames.
+- Para CPU o vídeos largos, reducir FPS o subir CONF_THRESHOLD.
+- Para lectura OCR avanzada, ver VC_P4b.ipynb.
 
-- Calidad de detección de matrículas depende fuertemente de la resolución del recorte del vehículo y del modelo `best.pt` entrenado. Si las placas están muy pequeñas o borrosas, la detección y lectura serán malas.
-- EasyOCR se usa como detector de texto auxiliar y puede añadir carga computacional; por eso en el notebook solo se ejecuta cada N frames.
-- Si va a procesar vídeos largos o en CPU, considere reducir `fps` de salida, aumentar `CONF_THRESHOLD` o procesar una muestra de frames.
-- Para lectura OCR completa y evaluación de texto (normalización y métricas) vea el notebook `VC_P4b/VC_P4b.ipynb` que contiene el ejercicio comparativo entre EasyOCR, Tesseract y PaddleOCR.
+---
 
-## Referencias
+## 📚 Referencias
+- Ultralytics YOLO: https://github.com/ultralytics/ultralytics  
+- EasyOCR: https://github.com/JaidedAI/EasyOCR  
+- PyTorch: https://pytorch.org  
+- ChatGPT: https://chat.openai.com  
 
-- Ultralytics YOLO: https://github.com/ultralytics/ultralytics
-- EasyOCR: https://github.com/JaidedAI/EasyOCR
-- Documentación PyTorch: https://pytorch.org/
-- ChatGPT: https://chatgpt.com/
-## Ejemplos y fragmentos de código
+---
 
-A continuación se incluyen fragmentos de código extraídos del notebook para facilitar su copia directa y prueba rápida.
+## 💻 Fragmentos de código útiles
 
-1) Configuración mínima (edita según tus rutas y modelos):
-
+1️⃣ Configuración mínima:
 ```python
-# Config
 VIDEO_IN_PATH = "C0142.MP4"
 VIDEO_OUT_PATH = "outputs/salida_anonimizada.mp4"
 CSV_OUT_PATH = "outputs/detecciones.csv"
-
 GENERAL_MODEL = "yolo11n.pt"
 PLATE_MODEL = "best.pt"
-
 CONF_THRESHOLD = 0.25
 BLUR_INTENSITY = 61
 USE_EASYOCR = True
 ```
 
-2) Función de blur:
-
+2️⃣ Función de blur:
 ```python
 def blur_region(img, x1, y1, x2, y2, intensity=BLUR_INTENSITY):
-	h, w = img.shape[:2]
-	x1, y1, x2, y2 = map(int, [max(0, x1), max(0, y1), min(w, x2), min(h, y2)])
-	if x2 <= x1 or y2 <= y1:
-		return img
-	roi = img[y1:y2, x1:x2]
-	k = intensity if (x2 - x1) > 30 else 15
-	k = k if k % 2 == 1 else k + 1
-	blurred = cv2.GaussianBlur(roi, (k, k), 0)
-	img[y1:y2, x1:x2] = blurred
-	return img
+    h, w = img.shape[:2]
+    x1, y1, x2, y2 = map(int, [max(0, x1), max(0, y1), min(w, x2), min(h, y2)])
+    if x2 <= x1 or y2 <= y1:
+        return img
+    roi = img[y1:y2, x1:x2]
+    k = intensity if (x2 - x1) > 30 else 15
+    k = k if k % 2 == 1 else k + 1
+    blurred = cv2.GaussianBlur(roi, (k, k), 0)
+    img[y1:y2, x1:x2] = blurred
+    return img
 ```
 
-3) Combinar detecciones YOLO + OCR:
-
+3️⃣ Combinar YOLO + OCR:
 ```python
 def merge_detections(yolo_box, ocr_box):
-	if yolo_box is None and ocr_box is None:
-		return None
-	if yolo_box is None:
-		return ocr_box
-	if ocr_box is None:
-		return yolo_box
-
-	# yolo_box: (x1,y1,x2,y2,conf)
-	yx1, yy1, yx2, yy2, yconf = yolo_box
-	ox1, oy1, ox2, oy2, oconf = ocr_box
-
-	return yolo_box if yconf > oconf else ocr_box
+    if yolo_box is None and ocr_box is None:
+        return None
+    if yolo_box is None:
+        return ocr_box
+    if ocr_box is None:
+        return yolo_box
+    yx1, yy1, yx2, yy2, yconf = yolo_box
+    ox1, oy1, ox2, oy2, oconf = ocr_box
+    return yolo_box if yconf > oconf else ocr_box
 ```
 
-## Imágenes de ejemplo del vídeo resultante
+---
 
-![Matriz de confusión](Captura-readme1.png)
-![Matriz de confusión](Captura-readme2.png)
+## 🖼️ Ejemplos visuales
+![Ejemplo 1](./Captura-readme1.png)
+![Ejemplo 2](./Captura-readme2.png)
+
+---
+
+## 🧾 Notas finales
+Este notebook constituye la parte principal del pipeline de visión de la práctica, y puede combinarse con el módulo VC_P4b para tareas de OCR avanzado y métricas.  
+Ambos módulos conforman el flujo completo de detección, anonimización y análisis de matrículas.
