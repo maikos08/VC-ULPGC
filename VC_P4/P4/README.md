@@ -195,6 +195,12 @@ def merge_detections(yolo_box, ocr_box):
 ![Ejemplo 1](./Captura-readme1.png)
 ![Ejemplo 2](./Captura-readme2.png)
 
+# Enlace al vídeo (haz clic sobre el para redirigirte al video)
+
+[![Ver demo](https://img.youtube.com/vi/gq9PvOOwxQs/0.jpg)](https://youtu.be/gq9PvOOwxQs)
+
+Se hace blurr bien en las personas y en las matrículas detectadas
+
 ---
 
 ## 🧾 Notas finales
