@@ -133,17 +133,44 @@ def process_image_ocr(img_path, label_path, ground_truth, save_example=False):
 
 ## 📊 Salidas esperadas
 
+## Ejercicio con dataset
+
 El CSV [`comparativa_ocr.csv`](https://github.com/maikos08/VC-ULPGC/blob/main/VC_P4/P4b/ocr_comparison_results/comparativa_ocr.csv) contiene:
 
 - `imagen`, `ground_truth`, `easy_raw`, `easy_normalized`, `easy_accuracy`, `easy_levenshtein`, `easy_time`  
 - `tess_raw`, `tess_normalized`, `tess_accuracy`, `tess_levenshtein`, `tess_time`
 
-Ejemplo visual:
+### Ejemplo visual:
 ![Ejemplo 0116GPD](images/0116GPD.png)
 ![Ejemplo 0116GPD](images/0476MNN.png)
 ![Ejemplo 0116GPD](images/0962LLT.png)
 ![Ejemplo 0116GPD](images/0416MLX.png)
 
+### Comparación final
+![EasyOCR vs Tesseract](images/comparativa_grafica.png)
+
+
+## Ejercicio con vídeo
+
+### Enlace al vídeo (haz clic sobre el para redirigirte al video)
+
+[![Ver demo](https://img.youtube.com/vi/NpHFdu5RNl0/0.jpg)](https://youtu.be/NpHFdu5RNl0)
+
+En el vídeo no se detecta bien casi ninguna matrícula. Para ver lo que está pasando con cada frame en el video cogimos diferentes capturas para poder debuggear.
+
+![Ejemplo 0116GPD](capturas/Captura1.png)
+![Ejemplo 0116GPD](capturas/Captura2.png)
+![Ejemplo 0116GPD](capturas/Captura3.png)
+![Ejemplo 0116GPD](capturas/Captura4.png)
+![Ejemplo 0116GPD](capturas/Captura5.png)
+
+Estas capturas las pasamos por el modelo y entendimos que no las leía bien por el desenfoque del movimiento mientras se están moviendo los coches.
+
+![Ejemplo 0116GPD](capturas/Captura1_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura2_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura3_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura4_ocr.png)
+![Ejemplo 0116GPD](capturas/Captura5_ocr.png)
 ---
 
 ## 💡 Notas y recomendaciones
