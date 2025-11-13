@@ -54,6 +54,41 @@ Procesar un vídeo y realizar:
 
 ---
 
+## ⚙️ Resultados del entrenamiento
+
+![Ejemplo 3](../resultados-del-entrenamiento/results.png)
+
+
+### 📉 Pérdidas (Losses)
+
+| Métrica | Descripción | Tendencia |
+|----------|--------------|-----------|
+| **train/box_loss** | Error en la predicción de las cajas delimitadoras. | 🔻 Disminuye progresivamente. |
+| **train/cls_loss** | Error al clasificar los objetos detectados. | 🔻 Disminuye rápidamente. |
+| **train/dfl_loss** | Distribution Focal Loss (mejora precisión de cajas). | 🔻 Disminuye constante. |
+| **val/box_loss** | Pérdida de cajas en validación. | 🔻 Disminuye, algo irregular. |
+| **val/cls_loss** | Pérdida de clasificación en validación. | 🔻 Disminuye bien. |
+| **val/dfl_loss** | Pérdida DFL en validación. | 🔻 Disminuye correctamente. |
+
+
+### 📈 Métricas de Rendimiento
+
+| Métrica | Descripción | Tendencia |
+|----------|--------------|-----------|
+| **metrics/precision(B)** | Proporción de detecciones correctas (evita falsos positivos). | 🔼 Sube hasta ~0.9 |
+| **metrics/recall(B)** | Proporción de objetos detectados (evita falsos negativos). | 🔼 Sube hasta ~0.85 |
+| **metrics/mAP50(B)** | Precisión promedio a IoU=0.5. | 🔼 Sube hasta ~0.9 |
+| **metrics/mAP50-95(B)** | Precisión promedio a IoU entre 0.5 y 0.95 (más estricta). | 🔼 Sube hasta ~0.5 |
+
+###  Conclusiones
+
+- El modelo muestra **una clara convergencia**: las pérdidas bajan y las métricas suben.
+- **No hay signos de sobreajuste**, ya que las curvas de validación siguen el mismo patrón que las de entrenamiento.
+- Los valores finales de **mAP50 (~0.9)** y **mAP50-95 (~0.5)** indican **buen rendimiento en detección**.
+
+
+---
+
 ## ⚙️ Requisitos e instalación
 Crear entorno con Python 3.9:
 
