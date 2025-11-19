@@ -54,6 +54,16 @@ Procesar un vídeo y realizar:
 
 ---
 
+## 📂 Dataset utilizado
+
+El conjunto de datos empleado para el entrenamiento del modelo YOLO destinado a la detección de matrículas está disponible en el siguiente enlace:
+
+### 🔗 Descargar dataset:
+https://drive.google.com/file/d/1MHEGWN_suCMlTrA9IHJFPZ2wKu8hqrGo/view?usp=sharing
+
+
+---
+
 ## ⚙️ Resultados del entrenamiento
 
 ![Ejemplo 3](../resultados-del-entrenamiento/results.png)
