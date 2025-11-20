@@ -18,9 +18,9 @@ El notebook incluido en esta carpeta (`VC_P5-filtro_basico.ipynb`) trabaja con m
 
 ---
 
-## Requisitos (rápido)
+## Requisitos
 
-Se recomienda usar un entorno virtual (conda). Dependencias mínimas (instaladlas por separado):
+Se recomienda usar un entorno virtual (conda). Dependencias mínimas:
 
 ```bash
 pip install opencv-python
@@ -104,7 +104,7 @@ A continuación se amplían las explicaciones y se describen las dos demos relac
 ### Demo A — Procesamiento de imágenes estáticas (carga y anotación)
 
 Descripción
-- Objetivo: probar cómo MediaPipe Holistic detecta rostros y manos en imágenes estáticas (no webcam). Permite validar la robustez del detector frente a distintas expresiones y poses (útil para crear dataset de ejemplo o para depuración).
+- Objetivo: probar cómo MediaPipe Holistic detecta rostros y manos en imágenes estáticas (no webcam). En los humanos lo detecta bien, por lo que hicimos que intentara detectar las caras y las manos de los monos de nuestras fotos. Esto a modo de curisosidad.
 
 Qué hace exactamente
 - Carga una lista de rutas de imágenes (p. ej. `../images/mono_*.jpg`) y ejecuta `holistic.process()` en cada imagen.
@@ -137,12 +137,17 @@ Consejos y parámetros importantes
 - `min_detection_confidence`: ajustar si detecta falsos positivos en fondo complejo.
 - Guarda las anotaciones para inspección manual y para crear conjuntos de entrenamiento o validación.
 
-Placeholder (imagenes generadas al procesar estáticas):
+Fotos que detectó bien
 
-```
-![Monos - anotado 1](images/monos_annotated_1.png)
-![Monos - anotado 2](images/monos_annotated_2.png)
-```
+![Monos - anotado 1](./images_readme/detectado_mono_feliz.png)
+![Monos - anotado 2](./images_readme/detectado_mono_neutral.webp)
+
+Fotos que no detectó bien
+
+
+![Monos - anotado 1](./images_readme/detectado_mono_pensando.jpg)
+![Monos - anotado 2](./images_readme/detectado_mono_enfadado.jpg)
+
 
 ### Demo B — Webcam lado a lado (comparativa detección vs resultado)
 
@@ -158,11 +163,10 @@ Puntos de mejora que podéis intentar
 - Ajustar el tamaño del buffer para suavizado (2-5). Mayor suavizado = menos reactividad.
 - Añadir thresholds para considerar gesto solo si hay confianza alta en landmarks.
 
-Placeholder (toma de pantalla / gif corto):
+Imágenes de la demo:
 
-```
-![Monos - lado a lado](demos/monos_side_by_side.gif)
-```
+![Monos - anotado 1](./images_readme/demo1-1.png)
+![Monos - anotado 2](./images_readme/demo1-2.png)
 
 ### Demo C — Superposición (filtro tipo máscara)
 
@@ -179,11 +183,17 @@ Recomendaciones
 - Para capas complejas (gafas con sombras) preprocesar la imagen de overlay con `eliminar_fondo_gafas()` o similares para limpiar el canal alpha.
 - Calibrar `ancho_filtro` y `alto_filtro` (multiplicadores usados en el notebook) si la máscara no encaja correctamente en caras con distinta proporción.
 
-Placeholder (ejemplo de superposición / gif):
+Imágenes de la demo:
 
-```
-![Monos - superposicion](demos/monos_overlay.gif)
-```
+![Monos - anotado 1](./images_readme/demo2-1.png)
+![Monos - anotado 2](./images_readme/demo2-2.png)
+
+
+## Gif Demo de monos
+
+
+![Monos - anotado 1](./demo_monos.gif)
+
 
 ---
 ## Demo de filtro de koala
@@ -239,18 +249,15 @@ Dónde colocar recursos
 - GIF de la demo (máx. 30s): `P5-1/demos/koala_demo.gif`
 - Imágenes de ejemplo (miniaturas): `P5-1/images/koala_1.png`, `P5-1/images/koala_2.png`
 
-Placeholder (coloca tus ficheros en las rutas anteriores):
+Imágenes de la demo:
 
-```
-![Demo koala (gif)](demos/koala_demo.gif)
-![Koala - ejemplo 1](images/koala_1.png)
-![Koala - ejemplo 2](images/koala_2.png)
-```
+![Koala - ejemplo 1](./images_readme/demo3-1.png)
+![Koala - ejemplo 1](./images_readme/demo3-2.png)
+![Koala - ejemplo 1](./images_readme/demo3-3.png)
 
+## Gif de la Demo
+
+![Demo koala (gif)](./demo_koala.mp4.gif)
 ---
 
 Si quieres que inserte las miniaturas y el reproductor directamente en el README cuando subas los ficheros, lo hago por ti (indica las rutas exactas). También puedo crear `P5-1/demos/run_demo.cmd` para arrancar la demo en Windows si lo deseas.
-
-
-
-
