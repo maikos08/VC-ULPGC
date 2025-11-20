@@ -45,6 +45,13 @@ Se recomienda usar un entorno conda. Instalación de dependencias:
     # DeepFace (detección facial)
     pip install deepface
     pip install tf-keras  # necesario para TensorFlow 2.20+
+------------------------------------------------------------------------
+
+## Dataset Utilizado
+
+Hemos utilizado este dataset:
+
+https://drive.google.com/file/d/1PhX7oIvhZqzj74YIjbRxfXCpUKGnaEre/view?usp=sharing
 
 ------------------------------------------------------------------------
 
