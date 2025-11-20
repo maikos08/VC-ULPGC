@@ -48,6 +48,58 @@ Se recomienda usar un entorno conda. Instalación de dependencias:
 
 ------------------------------------------------------------------------
 
+## 📊 Resultados del entrenamiento del modelo
+
+El modelo ResNet50 fue entrenado para la clasificación de **6 emociones faciales**
+(angry, fear, happy, neutral, sad, surprise), utilizando *fine-tuning parcial* sobre
+pesos preentrenados en ImageNet.
+
+A continuación se muestra la gráfica de pérdida (*loss*) y precisión (*accuracy*)
+para entrenamiento y validación:
+
+![Resultados Entrenamiento](../images/resultado-entrenamiento.png)
+
+---
+
+### 🧠 Análisis técnico de las curvas
+
+#### **1. Curvas de pérdida (Loss)**  
+En la gráfica izquierda se observa:
+
+- **Train Loss**: desciende progresivamente desde ~1.75 hasta valores cercanos a 0.9,
+  indicando una reducción sostenida del error durante la optimización.
+- **Validation Loss**: disminuye inicialmente (1.35 → ~1.1), pero se estabiliza entre
+  1.1 y 1.15, con fluctuaciones pequeñas en épocas posteriores.
+
+**Interpretación técnica:**
+
+- El modelo muestra **convergencia sólida**, sin oscilaciones abruptas.
+- La validación entra en un régimen **estacionario** tras ~10 épocas.
+- Aparece un **overfitting leve** a partir de la época 15: el train loss continúa
+  bajando mientras que el val loss deja de mejorar, comportamiento habitual en
+  clasificadores de emociones por la alta variabilidad del gesto facial.
+
+---
+
+#### **2. Curvas de precisión (Accuracy)**  
+En la gráfica derecha:
+
+- **Train Accuracy** progresa desde ~0.35 hasta ~0.78, evidencia del aprendizaje
+  efectivo en las capas superiores finamente ajustadas.
+- **Validation Accuracy** alcanza rápidamente ~0.67 en las primeras épocas y se
+  mantiene estable entre 0.66 y 0.69 durante el resto del entrenamiento.
+
+**Interpretación:**
+
+- El modelo presenta una **generalización aceptable**, sin caídas bruscas en val_acc.
+- El “gap” de ~10–12% entre entrenamiento y validación indica un **sobreajuste leve**,
+  pero dentro del rango normal para datasets de expresiones faciales sin
+  augmentations agresivos.
+- La estabilidad constante de la validación sugiere que el modelo ha alcanzado su
+  **capacidad representativa máxima** con la configuración actual.
+
+----------------------------------
+
 ## Prototipo 1 --- Climas emocionales + efectos faciales
 
 ### Descripción
