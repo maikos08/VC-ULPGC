@@ -1,5 +1,9 @@
 # Práctica 5 — Índice introductorio
 
+## 👥 Autores
+- **Alberto José Rodríguez Ruano**  
+- **Miguel Ángel Rodríguez Ruano**
+
 Este README es una página índice: aquí encontrarás enlaces directos a los notebooks y READMEs de cada subcarpeta y una breve introducción sobre qué contiene cada una y qué se espera entregar.
 
 ## Carpetas y notebooks principales
