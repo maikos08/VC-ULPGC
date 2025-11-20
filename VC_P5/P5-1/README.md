@@ -257,7 +257,7 @@ Imágenes de la demo:
 
 ## Gif de la Demo
 
-![Demo koala (gif)](./demo_koala.mp4.gif)
+![Demo koala (gif)](./demo_koala.gif)
 ---
 
 Si quieres que inserte las miniaturas y el reproductor directamente en el README cuando subas los ficheros, lo hago por ti (indica las rutas exactas). También puedo crear `P5-1/demos/run_demo.cmd` para arrancar la demo en Windows si lo deseas.
