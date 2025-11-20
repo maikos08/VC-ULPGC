@@ -119,11 +119,6 @@ for img_path in imagenes:
 holistic.close()
 ```
 
-Consejos y parámetros importantes
-- `model_complexity`: 0-2 (más alto = más preciso, más lento). Para imágenes estáticas usar 2 si dispones de tiempo.
-- `min_detection_confidence`: ajustar si detecta falsos positivos en fondo complejo.
-- Guarda las anotaciones para inspección manual y para crear conjuntos de entrenamiento o validación.
-
 Fotos que detectó bien
 
 ![Monos - anotado 1](./images_readme/detectado_mono_feliz.png)
@@ -146,7 +141,7 @@ Detalles técnicos
 - Suavizado temporal: se guarda un buffer corto (`deque(maxlen=3)`) y se toma la moda del buffer para evitar cambios bruscos entre frames.
 - Visualmente se combina el frame anotado y la imagen representativa mediante `np.hstack()`.
 
-Puntos de mejora que podéis intentar
+Puntos de mejora
 - Ajustar el tamaño del buffer para suavizado (2-5). Mayor suavizado = menos reactividad.
 - Añadir thresholds para considerar gesto solo si hay confianza alta en landmarks.
 
@@ -232,10 +227,6 @@ cap.release()
 cv2.destroyAllWindows()
 ```
 
-Dónde colocar recursos
-- GIF de la demo (máx. 30s): `P5-1/demos/koala_demo.gif`
-- Imágenes de ejemplo (miniaturas): `P5-1/images/koala_1.png`, `P5-1/images/koala_2.png`
-
 Imágenes de la demo:
 
 ![Koala - ejemplo 1](./images_readme/demo3-1.png)
@@ -246,5 +237,3 @@ Imágenes de la demo:
 
 ![Demo koala (gif)](./demo_koala.gif)
 ---
-
-Si quieres que inserte las miniaturas y el reproductor directamente en el README cuando subas los ficheros, lo hago por ti (indica las rutas exactas). También puedo crear `P5-1/demos/run_demo.cmd` para arrancar la demo en Windows si lo deseas.
