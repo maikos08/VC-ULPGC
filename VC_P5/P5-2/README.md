@@ -1,4 +1,4 @@
-# P5-2 --- Filtros de emoción con modelo propio
+# P5-2 - Filtros de emoción con modelo propio
 
 ## Objetivo de la práctica
 
@@ -10,7 +10,7 @@ clasificación de emociones faciales).
 
 Este repositorio incluye:
 
-1.  **Prototipo 1 (Climas emocionales + efectos faciales)**: Usa nuestro
+1.  **Prototipo 1 (Climas emocionales)**: Usa nuestro
     modelo ResNet50 entrenado para clasificar 6 emociones y reacciona
     con fondos animados.
 2.  **Prototipo 2 (Monos lado a lado)**: Compara la detección y
@@ -107,6 +107,11 @@ Se recomienda usar un entorno conda. Instalación de dependencias:
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
+## Gif Demo de clima por emoción
+
+
+![Clima - anotado 1](./demo-clima.gif)
+
 ------------------------------------------------------------------------
 
 ## Prototipo 2 --- Monos lado a lado (comparativa)
@@ -182,6 +187,10 @@ Se recomienda usar un entorno conda. Instalación de dependencias:
         "sad": "pensando",
         "surprise": "sorprendido"
     }
+
+## Gif Demo de monos
+
+![Monos - anotado 1](./demo-mono.gif)
 
 ------------------------------------------------------------------------
 
