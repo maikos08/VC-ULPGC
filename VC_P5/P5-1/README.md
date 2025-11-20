@@ -84,19 +84,6 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-```
-
-Dónde colocar recursos
-- GIF de la demo (máx. 30s): `P5-1/demos/monos_demo.gif`
-- Imágenes de ejemplo (miniaturas): `P5-1/images/monos_1.png`, `P5-1/images/monos_2.png`
-
-Placeholder (coloca tus ficheros en las rutas anteriores):
-
-```
-![Demo monos (gif)](demos/monos_demo.gif)
-![Monos - ejemplo 1](images/monos_1.png)
-![Monos - ejemplo 2](images/monos_2.png)
-```
 
 ---
 A continuación se amplían las explicaciones y se describen las dos demos relacionadas con los "monos" que hay en el notebook: la parte de procesamiento por lotes de imágenes estáticas y las dos demos en tiempo real (lado a lado y superposición).
