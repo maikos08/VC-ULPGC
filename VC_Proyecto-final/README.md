@@ -4,6 +4,12 @@
 
 ---
 
+## 👥 Autores
+- **Alberto José Rodríguez Ruano**  
+- **Miguel Ángel Rodríguez Ruano**
+
+---
+
 ## Objetivo del proyecto
 
 Este **trabajo final** desarrolla un **sistema de encuadre cinematográfico inteligente en tiempo real**, capaz de analizar la **pose corporal, los gestos de mano y la orientación del sujeto** para tomar decisiones automáticas de cámara inspiradas en el **lenguaje cinematográfico clásico**.
