@@ -27,7 +27,7 @@ El objetivo de estas prácticas es aplicar los conocimientos adquiridos en clase
 * [VC_P3/](https://github.com/maikos08/VC-ULPGC/tree/main/VC_P3) → Práctica 3 completa ✅
 * [VC_P4/](https://github.com/maikos08/VC-ULPGC/tree/main/VC_P4) → Práctica 4 completa ✅
 * [VC_P5/](https://github.com/maikos08/VC-ULPGC/tree/main/VC_P5) → Práctica 5 completa ✅
-* *(Se irán añadiendo nuevas carpetas para el resto de prácticas)*
+* [VC_Proyecto-final/](https://github.com/maikos08/VC-ULPGC/tree/main/VC_Proyecto-final) → Proyecto final completado ✅
 
 ---
 
@@ -44,4 +44,5 @@ El objetivo de estas prácticas es aplicar los conocimientos adquiridos en clase
 ## 📌 Notas
 
 Este repositorio es exclusivamente para fines académicos y de aprendizaje.
+
 

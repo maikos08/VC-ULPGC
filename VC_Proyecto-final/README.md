@@ -69,12 +69,13 @@ El resultado es un prototipo funcional orientado a:
 
 Se recomienda usar un entorno virtual.
 
-Dependencias mínimas:
+Dependencias mínimas están especificadas en el archivo requierements, lo que se debería hacer es:
 
 ```bash
-pip install opencv-python
-pip install mediapipe
-pip install numpy
+conda create -n camera_intelligent python=3.10
+conda activate camera_intelligent
+
+pip install -r requirements.txt
 ```
 
 Hardware:
@@ -390,4 +391,12 @@ Este trabajo final demuestra que es posible traducir información corporal en **
 
 **El sistema automático de cámara inteligente** no sustituye al director, sino que propone una nueva categoría:
  **herramientas audiovisuales inteligentes con criterio cinematográfico**.
+
+## Enlace a la demo
+
+ [![Ver demo](https://img.youtube.com/vi/dWNdu7A24tk/0.jpg)](https://youtu.be/dWNdu7A24tk)
+
+## Enlace al video promocional
+
+[![Ver vídeo promocional](https://img.youtube.com/vi/42CfiugmXT8/0.jpg)](https://youtu.be/42CfiugmXT8)
 
