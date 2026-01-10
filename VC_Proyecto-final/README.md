@@ -325,7 +325,7 @@ El sistema permite guardar el resultado final:
 
 ## Bloques hechos para poder llegar al producto final
 
-### 🔷 Bloque 1: Configuración Inicial y Detección Básica
+###  Bloque 1: Configuración Inicial y Detección Básica
 
 **Objetivo**: Establecer la base del sistema con MediaPipe y detección simple de landmarks corporales.
 
@@ -335,15 +335,11 @@ El sistema permite guardar el resultado final:
 * Visualización básica de landmarks (33 puntos del cuerpo)
 * Frame único con detección sin procesamiento adicional
 
-**Tecnologías**: `mediapipe`, `opencv-python`, `numpy`
-
-**Lo que aprenderás**: Cómo MediaPipe detecta la pose humana y representa el cuerpo mediante coordenadas 3D normalizadas.
-
 ![Bloque 1 - Detección Básica](./gif1.gif)
 
 ---
 
-### 🔷 Bloque 2: Análisis de Distancia y Detección Automática de Planos
+###  Bloque 2: Análisis de Distancia y Detección Automática de Planos
 
 **Objetivo**: Clasificar automáticamente el tipo de plano cinematográfico según la distancia del sujeto a la cámara.
 
@@ -355,12 +351,10 @@ El sistema permite guardar el resultado final:
 * 7 planos cinematográficos: desde *Extreme Wide* hasta *Extreme Close-up*
 * Interfaz con **grid de composición** (regla de tercios)
 
-**Lo que aprenderás**: Cómo traducir métricas corporales (ancho de hombros, visibilidad de landmarks) en decisiones cinematográficas automáticas.
-
 ![Bloque 2 - Detección Automática](./gif2.gif)
 ---
 
-### 🔷 Bloque 3: Control Manual con Gestos de Mano
+###  Bloque 3: Control Manual con Gestos de Mano
 
 **Objetivo**: Añadir control interactivo mediante reconocimiento de gestos manuales.
 
@@ -371,19 +365,17 @@ El sistema permite guardar el resultado final:
 * Cambio de plano en tiempo real según el gesto reconocido
 * Panel lateral con **lista de gestos disponibles**
 
-**Gestos implementados**:
+**Algunos de los Gestos implementados**:
 * ✊ Puño → Plano General
 * ☝️ 1 dedo → Plano Entero
 * ✌️ Paz → Primer Plano
 * 🤘 Rock → Primerísimo Plano
 
-**Lo que aprenderás**: Cómo combinar detección de pose y manos para crear interfaces de control gestual intuitivas.
-
 ![Bloque 3 - Control Manual](./gif3.gif)
 
 ---
 
-### 🔷 Bloque 4: Encuadre Inteligente y Seguimiento Suave
+###  Bloque 4: Encuadre Inteligente y Seguimiento Suave
 
 **Objetivo**: Implementar el sistema de zoom dinámico y seguimiento cinematográfico del sujeto.
 
@@ -398,8 +390,6 @@ El sistema permite guardar el resultado final:
 * Dos ventanas simultáneas:
   * DETECCIÓN (con landmarks visibles)
   * RESULTADO (encuadre final cinematográfico)
-
-**Lo que aprenderás**: Técnicas de crop dinámico, interpolación suave para evitar jitter, y cómo calcular centros de interés según el contexto narrativo.
 
 ![Bloque 4 - Encuadre Inteligente](./gif4.gif)
 
