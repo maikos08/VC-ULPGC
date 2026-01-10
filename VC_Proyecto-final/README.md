@@ -2,6 +2,8 @@
 
 ## *Sistema Autónomo de Encuadre Cinematográfico con Visión por Computador*
 
+![Carátula](./caratula.jpg)
+
 ---
 
 ## 👥 Autores
