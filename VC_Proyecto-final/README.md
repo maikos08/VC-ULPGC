@@ -323,38 +323,85 @@ El sistema permite guardar el resultado final:
 
 ---
 
-## 🎥 Vídeo de demo técnica
+## Bloques hechos para poder llegar al producto final
 
-> 📌 Espacio reservado para el vídeo de demostración técnica del sistema
+### 🔷 Bloque 1: Configuración Inicial y Detección Básica
 
-Contenido sugerido:
+**Objetivo**: Establecer la base del sistema con MediaPipe y detección simple de landmarks corporales.
 
-* funcionamiento en tiempo real
-* cambio automático de planos
-* control por gestos
-* panel de control
-* ejemplos de HOLD y grid
+**Componentes**:
+* Inicialización de MediaPipe Pose
+* Captura de video en tiempo real
+* Visualización básica de landmarks (33 puntos del cuerpo)
+* Frame único con detección sin procesamiento adicional
 
-```md
-[Enlace al vídeo de demo técnica]
-```
+**Tecnologías**: `mediapipe`, `opencv-python`, `numpy`
+
+**Lo que aprenderás**: Cómo MediaPipe detecta la pose humana y representa el cuerpo mediante coordenadas 3D normalizadas.
+
+![Bloque 1 - Detección Básica](./gif1.gif)
 
 ---
 
-## 🎬 Vídeo de venta / presentación del proyecto
+### 🔷 Bloque 2: Análisis de Distancia y Detección Automática de Planos
 
-> 📌 Espacio reservado para el vídeo conceptual / pitch
+**Objetivo**: Clasificar automáticamente el tipo de plano cinematográfico según la distancia del sujeto a la cámara.
 
-Contenido sugerido:
+**Componentes**:
+* Clase `DetectorPlanos` con heurísticas de clasificación
+* Cálculo del **ancho de hombros** como métrica principal
+* Análisis de **visibilidad de partes del cuerpo** (caderas, rodillas, tobillos)
+* Sistema de **suavizado temporal** mediante buffer histórico
+* 7 planos cinematográficos: desde *Extreme Wide* hasta *Extreme Close-up*
+* Interfaz con **grid de composición** (regla de tercios)
 
-* idea del “operador de cámara virtual”
-* relación con lenguaje cinematográfico
-* aplicaciones reales
-* valor creativo y técnico
+**Lo que aprenderás**: Cómo traducir métricas corporales (ancho de hombros, visibilidad de landmarks) en decisiones cinematográficas automáticas.
 
-```md
-[Enlace al vídeo de venta]
-```
+![Bloque 2 - Detección Automática](./gif2.gif)
+---
+
+### 🔷 Bloque 3: Control Manual con Gestos de Mano
+
+**Objetivo**: Añadir control interactivo mediante reconocimiento de gestos manuales.
+
+**Componentes**:
+* Integración de **MediaPipe Hands** para detección de manos
+* Clasificación de **8 gestos específicos**: puño cerrado, dedos levantados, paz, rock, pulgar abajo
+* Lógica de **conteo de dedos** y detección de gestos especiales
+* Cambio de plano en tiempo real según el gesto reconocido
+* Panel lateral con **lista de gestos disponibles**
+
+**Gestos implementados**:
+* ✊ Puño → Plano General
+* ☝️ 1 dedo → Plano Entero
+* ✌️ Paz → Primer Plano
+* 🤘 Rock → Primerísimo Plano
+
+**Lo que aprenderás**: Cómo combinar detección de pose y manos para crear interfaces de control gestual intuitivas.
+
+![Bloque 3 - Control Manual](./gif3.gif)
+
+---
+
+### 🔷 Bloque 4: Encuadre Inteligente y Seguimiento Suave
+
+**Objetivo**: Implementar el sistema de zoom dinámico y seguimiento cinematográfico del sujeto.
+
+**Componentes**:
+* Clase `SmoothFramer` con **interpolación progresiva** (smoothing factor 0.15)
+* Cálculo de **centro de seguimiento adaptativo**:
+  * Rostro para primeros planos
+  * Torso superior para planos medios
+  * Cuerpo completo para planos generales
+* **Crop dinámico** con factores de zoom de 0.7x a 2.8x
+* **Offset vertical** personalizado por tipo de plano
+* Dos ventanas simultáneas:
+  * DETECCIÓN (con landmarks visibles)
+  * RESULTADO (encuadre final cinematográfico)
+
+**Lo que aprenderás**: Técnicas de crop dinámico, interpolación suave para evitar jitter, y cómo calcular centros de interés según el contexto narrativo.
+
+![Bloque 4 - Encuadre Inteligente](./gif4.gif)
 
 ---
 
